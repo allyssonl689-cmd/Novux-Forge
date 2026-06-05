@@ -1,0 +1,1 @@
+export { ExerciseMedia } from './ExerciseMedia';

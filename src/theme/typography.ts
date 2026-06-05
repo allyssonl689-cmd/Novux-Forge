@@ -1,0 +1,72 @@
+export const typography = {
+  display: {
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    fontSize: 52,
+    lineHeight: 52,
+    letterSpacing: -2,
+  },
+  h1: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: -0.5,
+  },
+  h2: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 22,
+    lineHeight: 28,
+    letterSpacing: -0.3,
+  },
+  h3: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 18,
+    lineHeight: 24,
+    letterSpacing: -0.2,
+  },
+  subheading: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 16,
+    lineHeight: 22,
+    letterSpacing: 0,
+  },
+  body: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 14,
+    lineHeight: 22,
+    letterSpacing: 0,
+  },
+  bodySmall: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 12,
+    lineHeight: 18,
+    letterSpacing: 0,
+  },
+  label: {
+    fontFamily: 'PlusJakartaSans_500Medium',
+    fontSize: 11,
+    lineHeight: 16,
+    letterSpacing: 2,
+    textTransform: 'uppercase' as const,
+  },
+  labelSmall: {
+    fontFamily: 'PlusJakartaSans_500Medium',
+    fontSize: 9,
+    lineHeight: 14,
+    letterSpacing: 2.5,
+    textTransform: 'uppercase' as const,
+  },
+  caption: {
+    fontFamily: 'PlusJakartaSans_300Light',
+    fontSize: 12,
+    lineHeight: 18,
+    letterSpacing: 0,
+  },
+  weights: {
+    light:     'PlusJakartaSans_300Light',
+    regular:   'PlusJakartaSans_400Regular',
+    medium:    'PlusJakartaSans_500Medium',
+    semiBold:  'PlusJakartaSans_600SemiBold',
+    bold:      'PlusJakartaSans_700Bold',
+    extraBold: 'PlusJakartaSans_800ExtraBold',
+  },
+} as const;

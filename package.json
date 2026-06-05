@@ -1,0 +1,41 @@
+{
+  "name": "novux-forge",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@expo-google-fonts/plus-jakarta-sans": "latest",
+    "@expo/vector-icons": "latest",
+    "@react-native-async-storage/async-storage": "latest",
+    "@supabase/supabase-js": "latest",
+    "@tanstack/react-query": "^5.0.0",
+    "expo": "~51.0.0",
+    "expo-blur": "latest",
+    "expo-constants": "latest",
+    "expo-file-system": "latest",
+    "expo-font": "latest",
+    "expo-haptics": "latest",
+    "expo-image": "latest",
+    "expo-router": "~3.0.0",
+    "expo-secure-store": "latest",
+    "expo-status-bar": "latest",
+    "react": "18.2.0",
+    "react-hook-form": "latest",
+    "react-native": "0.74.0",
+    "react-native-reanimated": "~3.10.0",
+    "react-native-safe-area-context": "latest",
+    "react-native-screens": "latest",
+    "zod": "latest",
+    "zustand": "^4.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@types/react": "~18.2.0",
+    "typescript": "^5.0.0"
+  }
+}
