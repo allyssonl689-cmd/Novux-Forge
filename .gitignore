@@ -17,3 +17,7 @@ yarn-debug.*
 yarn-error.*
 .pnp/
 .pnp.js
+
+# Identidade visual: PNGs e brandbook vivem no repo novux-brand.
+brand/logo/png/
+brand/brandbook.html
