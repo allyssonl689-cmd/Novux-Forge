@@ -1,0 +1,560 @@
+{
+  "$schema": "https://novux.brand/tokens.schema.json",
+  "brand": "Novux Forge",
+  "id": "forge",
+  "generatedBy": "scripts/brand/build.mjs",
+  "gradient": {
+    "from": "#FF6B2C",
+    "to": "#FF2D78"
+  },
+  "surfaces": {
+    "background": "#050816",
+    "surface": "#0B1020",
+    "card": "#121933",
+    "elevated": "#1A2342",
+    "logoBackdropFrom": "#0B1020",
+    "logoBackdropTo": "#0F1735"
+  },
+  "scales": {
+    "primary": {
+      "50": "#F9ECE6",
+      "100": "#F6D8CA",
+      "200": "#F6B498",
+      "300": "#FA8857",
+      "400": "#FF5E1A",
+      "500": "#FF6D2E",
+      "600": "#DE4402",
+      "700": "#AB3807",
+      "800": "#7A2C0B",
+      "900": "#4B1F0B"
+    },
+    "accent": {
+      "50": "#F9E6ED",
+      "100": "#F6CADA",
+      "200": "#F698B9",
+      "300": "#FA5790",
+      "400": "#FF1A6A",
+      "500": "#FF2E77",
+      "600": "#DE024F",
+      "700": "#AB0741",
+      "800": "#7A0B32",
+      "900": "#4B0B22"
+    }
+  },
+  "dark": {
+    "background": {
+      "hex": "#050816",
+      "hsl": "229 63% 5.2%",
+      "hslArray": [
+        229,
+        63,
+        5.2
+      ]
+    },
+    "foreground": {
+      "hex": "#F2F4F8",
+      "hsl": "214 32% 96%",
+      "hslArray": [
+        214,
+        32,
+        96
+      ]
+    },
+    "card": {
+      "hex": "#121933",
+      "hsl": "227 48% 13.6%",
+      "hslArray": [
+        227,
+        48,
+        13.6
+      ]
+    },
+    "card-foreground": {
+      "hex": "#F2F4F8",
+      "hsl": "214 32% 96%",
+      "hslArray": [
+        214,
+        32,
+        96
+      ]
+    },
+    "popover": {
+      "hex": "#121933",
+      "hsl": "227 48% 13.6%",
+      "hslArray": [
+        227,
+        48,
+        13.6
+      ]
+    },
+    "popover-foreground": {
+      "hex": "#F2F4F8",
+      "hsl": "214 32% 96%",
+      "hslArray": [
+        214,
+        32,
+        96
+      ]
+    },
+    "secondary": {
+      "hex": "#19203E",
+      "hsl": "228 42% 17%",
+      "hslArray": [
+        228,
+        42,
+        17
+      ]
+    },
+    "secondary-foreground": {
+      "hex": "#A3B0C2",
+      "hsl": "215 20% 70%",
+      "hslArray": [
+        215,
+        20,
+        70
+      ]
+    },
+    "muted": {
+      "hex": "#1E2543",
+      "hsl": "228 38% 19%",
+      "hslArray": [
+        228,
+        38,
+        19
+      ]
+    },
+    "muted-foreground": {
+      "hex": "#7D8CA1",
+      "hsl": "215 16% 56%",
+      "hslArray": [
+        215,
+        16,
+        56
+      ]
+    },
+    "border": {
+      "hex": "#212845",
+      "hsl": "228 35% 20%",
+      "hslArray": [
+        228,
+        35,
+        20
+      ]
+    },
+    "input": {
+      "hex": "#212845",
+      "hsl": "228 35% 20%",
+      "hslArray": [
+        228,
+        35,
+        20
+      ]
+    },
+    "primary": {
+      "hex": "#FF6B2C",
+      "hsl": "18 100% 58.6%",
+      "hslArray": [
+        18,
+        100,
+        58.6
+      ]
+    },
+    "primary-foreground": {
+      "hex": "#04081B",
+      "hsl": "228 75% 6%",
+      "hslArray": [
+        228,
+        75,
+        6
+      ]
+    },
+    "accent": {
+      "hex": "#FF2D78",
+      "hsl": "338.7 100% 58.9%",
+      "hslArray": [
+        338.7,
+        100,
+        58.9
+      ]
+    },
+    "accent-foreground": {
+      "hex": "#FFFFFF",
+      "hsl": "0 0% 100%",
+      "hslArray": [
+        0,
+        0,
+        100
+      ]
+    },
+    "success": {
+      "hex": "#19D38A",
+      "hsl": "156.2 78.7% 46.4%",
+      "hslArray": [
+        156.2,
+        78.7,
+        46.4
+      ]
+    },
+    "success-foreground": {
+      "hex": "#04081B",
+      "hsl": "228 75% 6%",
+      "hslArray": [
+        228,
+        75,
+        6
+      ]
+    },
+    "warning": {
+      "hex": "#FFC93C",
+      "hsl": "43.3 100% 61.8%",
+      "hslArray": [
+        43.3,
+        100,
+        61.8
+      ]
+    },
+    "warning-foreground": {
+      "hex": "#251404",
+      "hsl": "30 80% 8%",
+      "hslArray": [
+        30,
+        80,
+        8
+      ]
+    },
+    "destructive": {
+      "hex": "#E5484D",
+      "hsl": "358 75% 59%",
+      "hslArray": [
+        358,
+        75,
+        59
+      ]
+    },
+    "destructive-foreground": {
+      "hex": "#FFFFFF",
+      "hsl": "0 0% 100%",
+      "hslArray": [
+        0,
+        0,
+        100
+      ]
+    },
+    "ring": {
+      "hex": "#FF6B2C",
+      "hsl": "18 100% 58.6%",
+      "hslArray": [
+        18,
+        100,
+        58.6
+      ]
+    },
+    "primary-text": {
+      "hex": "#FF6B2C",
+      "hsl": "18 100% 58.6%",
+      "hslArray": [
+        18,
+        100,
+        58.6
+      ]
+    },
+    "accent-text": {
+      "hex": "#FF3A80",
+      "hsl": "338.7 100% 61.4%",
+      "hslArray": [
+        338.7,
+        100,
+        61.4
+      ]
+    },
+    "success-text": {
+      "hex": "#19D38A",
+      "hsl": "156.2 78.7% 46.4%",
+      "hslArray": [
+        156.2,
+        78.7,
+        46.4
+      ]
+    },
+    "warning-text": {
+      "hex": "#FFC93C",
+      "hsl": "43.3 100% 61.8%",
+      "hslArray": [
+        43.3,
+        100,
+        61.8
+      ]
+    },
+    "destructive-text": {
+      "hex": "#E85C61",
+      "hsl": "358 75% 63.5%",
+      "hslArray": [
+        358,
+        75,
+        63.5
+      ]
+    }
+  },
+  "light": {
+    "background": {
+      "hex": "#F5F7FA",
+      "hsl": "214 32% 97%",
+      "hslArray": [
+        214,
+        32,
+        97
+      ]
+    },
+    "foreground": {
+      "hex": "#383E57",
+      "hsl": "228 22% 28%",
+      "hslArray": [
+        228,
+        22,
+        28
+      ]
+    },
+    "card": {
+      "hex": "#FFFFFF",
+      "hsl": "0 0% 100%",
+      "hslArray": [
+        0,
+        0,
+        100
+      ]
+    },
+    "card-foreground": {
+      "hex": "#383E57",
+      "hsl": "228 22% 28%",
+      "hslArray": [
+        228,
+        22,
+        28
+      ]
+    },
+    "popover": {
+      "hex": "#FFFFFF",
+      "hsl": "0 0% 100%",
+      "hslArray": [
+        0,
+        0,
+        100
+      ]
+    },
+    "popover-foreground": {
+      "hex": "#383E57",
+      "hsl": "228 22% 28%",
+      "hslArray": [
+        228,
+        22,
+        28
+      ]
+    },
+    "secondary": {
+      "hex": "#E7EAEF",
+      "hsl": "215 20% 92%",
+      "hslArray": [
+        215,
+        20,
+        92
+      ]
+    },
+    "secondary-foreground": {
+      "hex": "#363F63",
+      "hsl": "228 30% 30%",
+      "hslArray": [
+        228,
+        30,
+        30
+      ]
+    },
+    "muted": {
+      "hex": "#EDEFF2",
+      "hsl": "215 18% 94%",
+      "hslArray": [
+        215,
+        18,
+        94
+      ]
+    },
+    "muted-foreground": {
+      "hex": "#5C697A",
+      "hsl": "215 14% 42%",
+      "hslArray": [
+        215,
+        14,
+        42
+      ]
+    },
+    "border": {
+      "hex": "#D4DAE2",
+      "hsl": "215 20% 86%",
+      "hslArray": [
+        215,
+        20,
+        86
+      ]
+    },
+    "input": {
+      "hex": "#D4DAE2",
+      "hsl": "215 20% 86%",
+      "hslArray": [
+        215,
+        20,
+        86
+      ]
+    },
+    "primary": {
+      "hex": "#DD4C0E",
+      "hsl": "18 88% 46%",
+      "hslArray": [
+        18,
+        88,
+        46
+      ]
+    },
+    "primary-foreground": {
+      "hex": "#FFFFFF",
+      "hsl": "0 0% 100%",
+      "hslArray": [
+        0,
+        0,
+        100
+      ]
+    },
+    "accent": {
+      "hex": "#D41155",
+      "hsl": "339 85% 45%",
+      "hslArray": [
+        339,
+        85,
+        45
+      ]
+    },
+    "accent-foreground": {
+      "hex": "#FFFFFF",
+      "hsl": "0 0% 100%",
+      "hslArray": [
+        0,
+        0,
+        100
+      ]
+    },
+    "success": {
+      "hex": "#1C9C6D",
+      "hsl": "158 70% 36%",
+      "hslArray": [
+        158,
+        70,
+        36
+      ]
+    },
+    "success-foreground": {
+      "hex": "#FFFFFF",
+      "hsl": "0 0% 100%",
+      "hslArray": [
+        0,
+        0,
+        100
+      ]
+    },
+    "warning": {
+      "hex": "#C9840D",
+      "hsl": "38 88% 42%",
+      "hslArray": [
+        38,
+        88,
+        42
+      ]
+    },
+    "warning-foreground": {
+      "hex": "#FFFFFF",
+      "hsl": "0 0% 100%",
+      "hslArray": [
+        0,
+        0,
+        100
+      ]
+    },
+    "destructive": {
+      "hex": "#CE272D",
+      "hsl": "358 68% 48%",
+      "hslArray": [
+        358,
+        68,
+        48
+      ]
+    },
+    "destructive-foreground": {
+      "hex": "#FFFFFF",
+      "hsl": "0 0% 100%",
+      "hslArray": [
+        0,
+        0,
+        100
+      ]
+    },
+    "ring": {
+      "hex": "#DD4C0E",
+      "hsl": "18 88% 46%",
+      "hslArray": [
+        18,
+        88,
+        46
+      ]
+    },
+    "primary-text": {
+      "hex": "#BB400C",
+      "hsl": "18 88% 39%",
+      "hslArray": [
+        18,
+        88,
+        39
+      ]
+    },
+    "accent-text": {
+      "hex": "#CD1153",
+      "hsl": "339 85% 43.5%",
+      "hslArray": [
+        339,
+        85,
+        43.5
+      ]
+    },
+    "success-text": {
+      "hex": "#157753",
+      "hsl": "158 70% 27.5%",
+      "hslArray": [
+        158,
+        70,
+        27.5
+      ]
+    },
+    "warning-text": {
+      "hex": "#905E09",
+      "hsl": "38 88% 30%",
+      "hslArray": [
+        38,
+        88,
+        30
+      ]
+    },
+    "destructive-text": {
+      "hex": "#CB272C",
+      "hsl": "358 68% 47.5%",
+      "hslArray": [
+        358,
+        68,
+        47.5
+      ]
+    }
+  },
+  "notes": [
+    "Direção \"Ember\": laranja → magenta. Oposto cromático do cyan/roxo do Finance.",
+    "ATENÇÃO — a marca ocupa a faixa quente, que é onde normalmente vivem warning e danger.",
+    "Por isso warning foi deslocado para amarelo puro (#FFC93C) e danger para um vermelho",
+    "dessaturado (#E5484D): a separação se dá por croma, não só por matiz.",
+    "REGRA: no Forge, estado nunca é comunicado só por cor — sempre ícone + label junto.",
+    "REGRA: primary/accent jamais em componentes de feedback (toast, alert, badge de status)."
+  ]
+}

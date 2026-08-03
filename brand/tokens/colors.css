@@ -1,0 +1,73 @@
+/* Novux Forge — design tokens
+ * GERADO por scripts/brand/build.mjs — não editar à mão.
+ * Fonte da verdade: scripts/brand/brands.mjs
+ *
+ * Os valores são triplas HSL cruas, para consumo via hsl(var(--token) / <alpha>).
+ */
+:root {
+    --background:             229 63% 5.2%;
+    --foreground:             214 32% 96%;
+    --card:                   227 48% 13.6%;
+    --card-foreground:        214 32% 96%;
+    --popover:                227 48% 13.6%;
+    --popover-foreground:     214 32% 96%;
+    --secondary:              228 42% 17%;
+    --secondary-foreground:   215 20% 70%;
+    --muted:                  228 38% 19%;
+    --muted-foreground:       215 16% 56%;
+    --border:                 228 35% 20%;
+    --input:                  228 35% 20%;
+    --primary:                18 100% 58.6%;
+    --primary-foreground:     228 75% 6%;
+    --accent:                 338.7 100% 58.9%;
+    --accent-foreground:      0 0% 100%;
+    --success:                156.2 78.7% 46.4%;
+    --success-foreground:     228 75% 6%;
+    --warning:                43.3 100% 61.8%;
+    --warning-foreground:     30 80% 8%;
+    --destructive:            358 75% 59%;
+    --destructive-foreground: 0 0% 100%;
+    --ring:                   18 100% 58.6%;
+    --primary-text:           18 100% 58.6%;
+    --accent-text:            338.7 100% 61.4%;
+    --success-text:           156.2 78.7% 46.4%;
+    --warning-text:           43.3 100% 61.8%;
+    --destructive-text:       358 75% 63.5%;
+    --radius:                 1rem;
+
+    /* Gradiente da marca */
+    --brand-gradient-from:    #FF6B2C;
+    --brand-gradient-to:      #FF2D78;
+    --brand-gradient:         linear-gradient(135deg, #FF6B2C, #FF2D78);
+}
+
+.light {
+    --background:             214 32% 97%;
+    --foreground:             228 22% 28%;
+    --card:                   0 0% 100%;
+    --card-foreground:        228 22% 28%;
+    --popover:                0 0% 100%;
+    --popover-foreground:     228 22% 28%;
+    --secondary:              215 20% 92%;
+    --secondary-foreground:   228 30% 30%;
+    --muted:                  215 18% 94%;
+    --muted-foreground:       215 14% 42%;
+    --border:                 215 20% 86%;
+    --input:                  215 20% 86%;
+    --primary:                18 88% 46%;
+    --primary-foreground:     0 0% 100%;
+    --accent:                 339 85% 45%;
+    --accent-foreground:      0 0% 100%;
+    --success:                158 70% 36%;
+    --success-foreground:     0 0% 100%;
+    --warning:                38 88% 42%;
+    --warning-foreground:     0 0% 100%;
+    --destructive:            358 68% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --ring:                   18 88% 46%;
+    --primary-text:           18 88% 39%;
+    --accent-text:            339 85% 43.5%;
+    --success-text:           158 70% 27.5%;
+    --warning-text:           38 88% 30%;
+    --destructive-text:       358 68% 47.5%;
+}
