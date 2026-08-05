@@ -16,6 +16,7 @@ interface Props {
   set: SetEntry;
   onChangeWeight: (val: string) => void;
   onChangeReps: (val: string) => void;
+  onChangeRpe: (val: string) => void;
   onComplete: () => void;
   onUncomplete: () => void;
   onToggleWarmup: () => void;
@@ -26,6 +27,7 @@ export function SetRow({
   set,
   onChangeWeight,
   onChangeReps,
+  onChangeRpe,
   onComplete,
   onUncomplete,
   onToggleWarmup,
@@ -74,6 +76,23 @@ export function SetRow({
         />
         <Text style={styles.inputUnit}>reps</Text>
       </View>
+
+      {/* RPE — percepção de esforço, não se aplica a séries de aquecimento */}
+      {!set.isWarmup && (
+        <View style={styles.rpeWrapper}>
+          <TextInput
+            style={[styles.input, set.completed && styles.inputCompleted]}
+            value={set.rpe !== null ? String(set.rpe) : ''}
+            onChangeText={onChangeRpe}
+            placeholder="—"
+            placeholderTextColor={colors.text.tertiary}
+            keyboardType="number-pad"
+            maxLength={2}
+            editable={!set.completed}
+            selectTextOnFocus
+          />
+        </View>
+      )}
 
       {/* PR badge */}
       {set.isPersonalRecord && (
@@ -147,6 +166,17 @@ const makeStyles = (colors: ThemeColors) =>
     },
     inputCompleted: { color: colors.accent.default },
     inputUnit: { ...typography.bodySmall, color: colors.text.tertiary },
+
+    rpeWrapper: {
+      width: 40,
+      alignItems: 'center',
+      backgroundColor: colors.bg.surface,
+      borderRadius: radius.sm,
+      borderWidth: 1,
+      borderColor: colors.border.default,
+      height: 40,
+      justifyContent: 'center',
+    },
 
     prBadge: {
       backgroundColor: colors.amber.dim,

@@ -14,6 +14,7 @@ Os seeds são idempotentes: rodar de novo não duplica dados.
 | 7 | `migrations/004_weekly_plan.sql` | Plano semanal + respostas do onboarding em `profiles` |
 | 8 | `migrations/005_exercise_execution.sql` | Campos de execução prática (`common_mistakes`, `breathing`, `tempo`, etc.) |
 | 9 | `seed/004_exercise_execution_content.sql` | Preenche execução prática dos 69 exercícios |
+| 10 | `migrations/006_body_measurements.sql` | Histórico de peso corporal (`body_measurements`), uma entrada por dia |
 
 > **A ordem importa entre 4 e 5.** O seed de planos referencia exercícios por `slug`;
 > se o catálogo ampliado não estiver carregado, os exercícios faltantes são ignorados

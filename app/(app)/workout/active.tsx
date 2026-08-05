@@ -20,7 +20,7 @@ import {
   useActiveWorkoutStore,
 } from '@/features/workouts/activeWorkoutStore';
 import { fetchLastPerformance } from '@/features/workouts/lastPerformanceService';
-import { formatLastPerformance } from '@/features/workouts/progression';
+import { estimateOneRepMax, formatLastPerformance } from '@/features/workouts/progression';
 import { useWorkouts } from '@/features/workouts/useWorkouts';
 import {
   fetchWorkoutWithExercises,
@@ -163,6 +163,9 @@ function ActiveWorkoutScreen() {
   const rest = useRestTimer(() => haptics.heavy());
 
   const currentEx = exercises[currentExerciseIndex];
+  const oneRepMax = currentEx?.lastPerformance
+    ? estimateOneRepMax(currentEx.lastPerformance.weightKg, currentEx.lastPerformance.reps)
+    : null;
 
   const completedSets = exercises.reduce(
     (acc, ex) => acc + ex.sets.filter((s) => s.completed).length,
@@ -321,6 +324,12 @@ function ActiveWorkoutScreen() {
                   <Text style={styles.progressionLabel}>Carga sugerida acima da última</Text>
                 </View>
               )}
+              {oneRepMax != null && (
+                <View style={styles.lastChip}>
+                  <Feather name="bar-chart-2" size={12} color={colors.text.secondary} />
+                  <Text style={styles.lastLabel}>1RM est.: {oneRepMax} kg</Text>
+                </View>
+              )}
             </View>
           )}
 
@@ -328,6 +337,7 @@ function ActiveWorkoutScreen() {
             <Text style={[styles.tableCol, { width: 28 }]}>Série</Text>
             <Text style={[styles.tableCol, { flex: 1 }]}>Peso</Text>
             <Text style={[styles.tableCol, { flex: 1 }]}>Reps</Text>
+            <Text style={[styles.tableCol, { width: 40 }]}>RPE</Text>
             <Text style={[styles.tableCol, { width: 80 }]}></Text>
           </View>
 
@@ -344,6 +354,11 @@ function ActiveWorkoutScreen() {
                 onChangeReps={(val) =>
                   updateSet(currentExerciseIndex, si, {
                     reps: val === '' ? null : parseInt(val, 10) || null,
+                  })
+                }
+                onChangeRpe={(val) =>
+                  updateSet(currentExerciseIndex, si, {
+                    rpe: val === '' ? null : parseInt(val, 10) || null,
                   })
                 }
                 onComplete={() => handleCompleteSet(si)}

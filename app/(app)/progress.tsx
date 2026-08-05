@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScoreRing } from '@/components/stats/ScoreRing';
+import { WeightLogCard } from '@/components/stats/WeightLogCard';
 import { Severity } from '@/features/stats/insights';
 import { MuscleVolume } from '@/features/stats/statsService';
 import { useTrainingStats } from '@/features/stats/useStats';
@@ -75,6 +76,12 @@ export default function ProgressScreen() {
                 progressão e equilíbrio muscular.
               </Text>
             )}
+          </View>
+
+          {/* Peso corporal */}
+          <Text style={styles.sectionLabel}>Peso corporal</Text>
+          <View style={styles.card}>
+            <WeightLogCard />
           </View>
 
           {/* Volume por grupo muscular (7 dias) */}

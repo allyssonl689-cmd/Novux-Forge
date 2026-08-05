@@ -12,6 +12,8 @@ export interface SetEntry {
   weightKg: number | null;
   reps: number | null;
   targetReps: number | null;
+  /** Percepção de esforço (1-10) — opcional, não se aplica a séries de aquecimento */
+  rpe: number | null;
   completed: boolean;
   isPersonalRecord: boolean;
   isWarmup: boolean;
@@ -81,6 +83,7 @@ function makeSets(count: number, reps: number, weightKg: number | null): SetEntr
     weightKg,
     reps: null,
     targetReps: reps,
+    rpe: null,
     completed: false,
     isPersonalRecord: false,
     isWarmup: false,
@@ -250,6 +253,7 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState>()(
               weightKg: lastSet?.weightKg ?? null,
               reps: null,
               targetReps: lastSet?.targetReps ?? null,
+              rpe: null,
               completed: false,
               isPersonalRecord: false,
               isWarmup: false,
@@ -311,6 +315,7 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState>()(
               set_number: s.setNumber,
               weight_kg: s.weightKg,
               reps: s.reps,
+              rpe: s.rpe,
               is_warmup: s.isWarmup,
               is_personal_record: s.isPersonalRecord,
               completed_at: finishedAt.toISOString(),

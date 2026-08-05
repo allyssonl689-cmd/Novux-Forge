@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { weightIncrement, seedWeight, formatLastPerformance } from './progression';
+import { weightIncrement, seedWeight, formatLastPerformance, estimateOneRepMax } from './progression';
 
 describe('weightIncrement', () => {
   it('cargas leves (<10kg) sobem 1kg', () => {
@@ -79,5 +79,29 @@ describe('formatLastPerformance', () => {
 
   it('sem reps registrados, mostra só o peso', () => {
     expect(formatLastPerformance({ weightKg: 40, reps: null })).toBe('40 kg');
+  });
+});
+
+describe('estimateOneRepMax', () => {
+  it('sem peso (peso corporal) ou sem reps, não estima', () => {
+    expect(estimateOneRepMax(null, 10)).toBeNull();
+    expect(estimateOneRepMax(40, null)).toBeNull();
+    expect(estimateOneRepMax(0, 10)).toBeNull();
+  });
+
+  it('mais de 12 reps: fórmula perde precisão, não estima', () => {
+    expect(estimateOneRepMax(20, 13)).toBeNull();
+  });
+
+  it('1 rep: a própria carga já é o 1RM', () => {
+    expect(estimateOneRepMax(80, 1)).toBe(80);
+  });
+
+  it('Epley: 40kg x 10 -> 40 * (1 + 10/30) = 53.33 -> 53.5', () => {
+    expect(estimateOneRepMax(40, 10)).toBe(53.5);
+  });
+
+  it('Epley: 100kg x 5 -> 100 * (1 + 5/30) = 116.67 -> 116.5', () => {
+    expect(estimateOneRepMax(100, 5)).toBe(116.5);
   });
 });

@@ -25,8 +25,19 @@ export function weightIncrement(weight: number): number {
 }
 
 /** Arredonda para o múltiplo de 0,5 kg mais próximo (menor anilha comum) */
-function roundHalf(value: number): number {
+export function roundHalf(value: number): number {
   return Math.round(value * 2) / 2;
+}
+
+/**
+ * Estimativa de 1RM (fórmula de Epley) — referência para acompanhar força,
+ * não uma carga a perseguir. Sem estimativa para séries de peso corporal
+ * (sem carga) ou de mais de 12 reps, onde a fórmula perde precisão.
+ */
+export function estimateOneRepMax(weightKg: number | null, reps: number | null): number | null {
+  if (!weightKg || !reps || reps < 1 || reps > 12) return null;
+  if (reps === 1) return weightKg;
+  return roundHalf(weightKg * (1 + reps / 30));
 }
 
 /**
