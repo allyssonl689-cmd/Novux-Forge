@@ -214,7 +214,10 @@ function ActiveWorkoutScreen() {
             } catch {
               setFinishing(false);
               haptics.error();
-              Alert.alert('Erro', 'Não foi possível salvar o treino. Tente novamente.');
+              Alert.alert(
+                'Falha ao salvar',
+                'Sem conexão ou o Supabase não respondeu. Seus dados continuam aqui — toque em "Finalizar" de novo quando a conexão voltar.',
+              );
             }
           },
         },

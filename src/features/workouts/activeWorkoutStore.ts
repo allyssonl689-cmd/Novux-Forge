@@ -287,6 +287,16 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState>()(
           Math.floor((finishedAt.getTime() - new Date(state.startedAt).getTime()) / 1000),
         );
 
+        // Idempotência: se uma tentativa anterior falhou no meio (rede caiu na
+        // academia), limpa qualquer exercise_logs/set_logs parcialmente
+        // gravado antes de regravar do zero — sem isso, tentar de novo
+        // duplicaria os exercícios que já tinham sido salvos.
+        const { error: cleanupErr } = await supabase
+          .from('exercise_logs')
+          .delete()
+          .eq('workout_log_id', state.workoutLogId);
+        if (cleanupErr) throw cleanupErr;
+
         let totalVolume = 0;
 
         for (const ex of state.exercises) {
@@ -305,7 +315,8 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState>()(
             .select('id')
             .single();
 
-          if (exErr || !exLog) continue;
+          if (exErr) throw exErr;
+          if (!exLog) throw new Error('Falha ao registrar exercício do treino.');
 
           const setRows = completedSets.map((s) => {
             // Regra 5: séries de aquecimento não somam ao volume
@@ -322,11 +333,12 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState>()(
             };
           });
 
-          await supabase.from('set_logs').insert(setRows);
+          const { error: setErr } = await supabase.from('set_logs').insert(setRows);
+          if (setErr) throw setErr;
         }
 
         // Regra 3: duração e volume são consolidados na finalização
-        await supabase
+        const { error: updateErr } = await supabase
           .from('workout_logs')
           .update({
             finished_at: finishedAt.toISOString(),
@@ -334,7 +346,12 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState>()(
             total_volume_kg: totalVolume,
           })
           .eq('id', state.workoutLogId);
+        if (updateErr) throw updateErr;
 
+        // Só limpa a sessão local depois de confirmar que tudo foi salvo —
+        // se qualquer passo acima falhar, o treino continua ativo (e
+        // persistido) para o usuário tentar "Finalizar" de novo sem perder
+        // nada que já preencheu.
         set(EMPTY_STATE);
       },
 
