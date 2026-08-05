@@ -24,6 +24,15 @@ export interface Exercise {
   free_db_id: string | null;
   rapid_api_id: string | null;
   created_at: string;
+
+  // Execução prática (migration 005)
+  common_mistakes: string[];
+  setup_steps: string[];
+  breathing: string | null;
+  tempo: string | null;
+  safety_notes: string | null;
+  /** Nulo = o app abre uma busca no YouTube pelo nome do exercício */
+  video_url: string | null;
 }
 
 export interface Workout {
