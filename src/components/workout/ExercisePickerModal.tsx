@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '@/components/ui';
+import { Button, Skeleton, SkeletonGroup } from '@/components/ui';
 import { useExercises } from '@/features/exercises/useExercises';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
@@ -125,8 +125,18 @@ export function ExercisePickerModal({ visible, onClose, alreadyAddedIds = [], on
         </ScrollView>
 
         {isLoading ? (
-          <View style={styles.center}>
-            <Text style={styles.muted}>Carregando catálogo…</Text>
+          <View style={styles.listPadding}>
+            <SkeletonGroup gap={spacing.md}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <View key={i} style={styles.rowSkeleton}>
+                  <Skeleton width={40} height={40} radius={radius.md} />
+                  <View style={{ flex: 1, gap: spacing.xs }}>
+                    <Skeleton width="60%" height={14} />
+                    <Skeleton width="35%" height={11} />
+                  </View>
+                </View>
+              ))}
+            </SkeletonGroup>
           </View>
         ) : (
           <FlatList
@@ -261,5 +271,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   },
 
   center: { alignItems: 'center', justifyContent: 'center', gap: spacing.md, paddingVertical: spacing['5xl'] },
+  listPadding: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
+  rowSkeleton: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   muted: { ...typography.body, color: colors.text.secondary },
 });

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RestTimerBar, SetRow, WorkoutTimer } from '@/components/workout';
+import { Skeleton, SkeletonGroup } from '@/components/ui';
 import { useAuth } from '@/features/auth/useAuth';
 import {
   StartExerciseInput,
@@ -75,9 +76,12 @@ function WorkoutPickerScreen({
       </View>
 
       {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.accent.default} />
-          <Text style={styles.muted}>Carregando fichas…</Text>
+        <View style={styles.pickerList}>
+          <SkeletonGroup gap={spacing.sm}>
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} height={64} radius={radius.lg} />
+            ))}
+          </SkeletonGroup>
         </View>
       ) : workouts.length === 0 ? (
         <View style={styles.center}>

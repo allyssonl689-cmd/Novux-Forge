@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, EmptyState, Skeleton, SkeletonGroup } from '@/components/ui';
 import { useCreateWorkout, useWorkouts } from '@/features/workouts/useWorkouts';
 import { WorkoutSummary } from '@/features/workouts/workoutService';
 import { useHaptics } from '@/hooks/useHaptics';
@@ -127,31 +127,25 @@ export default function WorkoutsScreen() {
         ListEmptyComponent={
           isLoading ? (
             <View style={styles.center}>
-              <Text style={styles.muted}>Carregando fichas…</Text>
+              <SkeletonGroup gap={spacing.sm}>
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} height={64} radius={radius.lg} />
+                ))}
+              </SkeletonGroup>
             </View>
           ) : (
-            <View style={styles.center}>
-              <View style={styles.emptyIcon}>
-                <Feather name="clipboard" size={26} color={colors.accent.default} />
-              </View>
-              <Text style={styles.emptyTitle}>Nenhuma ficha ainda</Text>
-              <Text style={styles.emptyText}>
-                Uma ficha é a lista de exercícios de um dia de treino — por exemplo
-                "Peito e tríceps". Comece por um plano pronto: o app cria as fichas
-                da divisão inteira e você ajusta o que quiser.
-              </Text>
-              <Button
-                label="Ver planos prontos"
-                onPress={() => router.push('/(app)/workouts/plans')}
-                style={styles.emptyBtn}
-              />
-              <Button
-                label="Criar ficha do zero"
-                variant="secondary"
-                onPress={openModal}
-                style={styles.emptyBtnSecondary}
-              />
-            </View>
+            <EmptyState
+              icon="clipboard"
+              title="Nenhuma ficha ainda"
+              description={
+                'Uma ficha é a lista de exercícios de um dia de treino — por exemplo ' +
+                '"Peito e tríceps". Comece por um plano pronto: o app cria as fichas ' +
+                'da divisão inteira e você ajusta o que quiser.'
+              }
+            >
+              <Button label="Ver planos prontos" onPress={() => router.push('/(app)/workouts/plans')} />
+              <Button label="Criar ficha do zero" variant="secondary" onPress={openModal} />
+            </EmptyState>
           )
         }
         renderItem={({ item }) => (
@@ -294,19 +288,6 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, paddingHorizontal: spacing.lg },
-  muted: { ...typography.body, color: colors.text.secondary },
-  emptyIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.full,
-    backgroundColor: colors.accent.dim,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyTitle: { ...typography.h3, color: colors.text.primary },
-  emptyText: { ...typography.body, color: colors.text.secondary, textAlign: 'center' },
-  emptyBtn: { marginTop: spacing.md, alignSelf: 'stretch' },
-  emptyBtnSecondary: { alignSelf: 'stretch' },
 
   plansBanner: {
     flexDirection: 'row',

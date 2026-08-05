@@ -22,6 +22,7 @@ import React, { useEffect } from 'react';
 import { useAuthStore } from '@/features/auth/authStore';
 import { queryClient } from '@/lib/queryClient';
 import { useTheme } from '@/theme';
+import { ErrorBoundary } from '@/components/ui';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -84,12 +85,14 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} backgroundColor={colors.bg.base} />
-      <AuthGate>
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg.base } }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(app)" />
-        </Stack>
-      </AuthGate>
+      <ErrorBoundary>
+        <AuthGate>
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg.base } }}>
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(app)" />
+          </Stack>
+        </AuthGate>
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }

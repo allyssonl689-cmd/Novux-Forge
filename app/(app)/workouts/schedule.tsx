@@ -15,6 +15,7 @@ import { WEEKDAY_LABEL } from '@/features/plan/recommendation';
 import { useSetWeekdayWorkout, useWeeklyPlan } from '@/features/plan/useWeeklyPlan';
 import { useWorkouts } from '@/features/workouts/useWorkouts';
 import { useHaptics } from '@/hooks/useHaptics';
+import { Skeleton, SkeletonGroup } from '@/components/ui';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
 import { radius, spacing, typography } from '@/theme';
@@ -66,7 +67,11 @@ export default function ScheduleScreen() {
         </Text>
 
         {isLoading ? (
-          <Text style={styles.muted}>Carregando agenda…</Text>
+          <SkeletonGroup gap={spacing.sm}>
+            {WEEKDAY_LABEL.map((_, i) => (
+              <Skeleton key={i} height={56} radius={radius.lg} />
+            ))}
+          </SkeletonGroup>
         ) : (
           WEEKDAY_LABEL.map((label, weekday) => {
             const entry = weeklyPlan.find((e) => e.weekday === weekday);

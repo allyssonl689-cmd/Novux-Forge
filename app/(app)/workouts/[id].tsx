@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ExercisePickerModal } from '@/components/workout';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, Skeleton, SkeletonGroup } from '@/components/ui';
 import {
   useAddExercisesToWorkout,
   useDeleteWorkout,
@@ -153,7 +153,11 @@ export default function WorkoutEditorScreen() {
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {isLoading ? (
-          <Text style={styles.muted}>Carregando ficha…</Text>
+          <SkeletonGroup gap={spacing.md}>
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} height={72} radius={radius.lg} />
+            ))}
+          </SkeletonGroup>
         ) : exercises.length === 0 ? (
           <View style={styles.empty}>
             <View style={styles.emptyIcon}>
@@ -414,7 +418,6 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingBottom: spacing['3xl'],
     gap: spacing.sm,
   },
-  muted: { ...typography.body, color: colors.text.secondary, textAlign: 'center', marginTop: spacing['3xl'] },
 
   empty: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing['3xl'] },
   emptyIcon: {

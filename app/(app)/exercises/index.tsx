@@ -2,7 +2,6 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   ScrollView,
   StyleSheet,
@@ -13,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ExerciseCard } from '@/components/workout';
+import { Skeleton, SkeletonGroup } from '@/components/ui';
 import { useExercises } from '@/features/exercises/useExercises';
 import { Exercise } from '@/types/workout';
 import { useTheme } from '@/theme';
@@ -112,9 +112,18 @@ export default function ExercisesScreen() {
 
       {/* Lista */}
       {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.accent.default} size="large" />
-          <Text style={styles.loadingText}>Carregando exercícios...</Text>
+        <View style={styles.listSkeleton}>
+          <SkeletonGroup gap={spacing.md}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <View key={i} style={styles.rowSkeleton}>
+                <Skeleton width={40} height={40} radius={radius.md} />
+                <View style={{ flex: 1, gap: spacing.xs }}>
+                  <Skeleton width="60%" height={14} />
+                  <Skeleton width="35%" height={11} />
+                </View>
+              </View>
+            ))}
+          </SkeletonGroup>
         </View>
       ) : isError ? (
         <View style={styles.center}>
@@ -233,7 +242,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     gap: spacing.md,
     paddingTop: spacing['4xl'],
   },
-  loadingText: { ...typography.body, color: colors.text.secondary },
+  listSkeleton: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
+  rowSkeleton: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   errorText:   { ...typography.body, color: colors.text.secondary },
   emptyText:   { ...typography.body, color: colors.text.secondary },
   retryBtn: {

@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '@/components/ui';
+import { Button, Skeleton, SkeletonGroup } from '@/components/ui';
 import { useAuth } from '@/features/auth/useAuth';
 import { GOAL_LABEL, LEVEL_LABEL, EQUIPMENT_LABEL } from '@/features/splits/splitService';
 import { useProfile, useUpdateProfile } from '@/features/profile/useProfile';
@@ -101,7 +101,16 @@ export default function ProfileScreen() {
           </View>
 
           {isLoading ? (
-            <Text style={styles.muted}>Carregando perfil…</Text>
+            <SkeletonGroup gap={spacing.lg}>
+              <SkeletonGroup gap={spacing.sm}>
+                <Skeleton width={120} height={11} />
+                <Skeleton height={44} radius={radius.md} />
+              </SkeletonGroup>
+              <SkeletonGroup gap={spacing.sm}>
+                <Skeleton width={140} height={11} />
+                <Skeleton height={44} radius={radius.md} />
+              </SkeletonGroup>
+            </SkeletonGroup>
           ) : (
             <>
               {/* Dados editáveis */}
@@ -214,8 +223,6 @@ const makeStyles = (colors: ThemeColors) =>
     },
     avatarInitial: { ...typography.h1, color: colors.accent.default },
     email: { ...typography.body, color: colors.text.secondary },
-
-    muted: { ...typography.body, color: colors.text.secondary, textAlign: 'center' },
 
     field: { gap: spacing.sm },
     fieldLabel: { ...typography.label, color: colors.text.secondary },
