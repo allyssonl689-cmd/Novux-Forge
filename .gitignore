@@ -21,3 +21,8 @@ yarn-error.*
 # Identidade visual: PNGs e brandbook vivem no repo novux-brand.
 brand/logo/png/
 brand/brandbook.html
+
+# Projeto usa Continuous Native Generation (app.config.ts dinâmico) —
+# pastas nativas são geradas por `expo prebuild`, não versionadas.
+/android
+/ios
