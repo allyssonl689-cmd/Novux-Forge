@@ -195,6 +195,75 @@ pular e barra de progresso. Não dispara na última série do exercício. Para a
 
 ---
 
+## 2.7 Correções e fases pós-lançamento (2026-08-05)
+
+Depois do build local (workaround para a fila do EAS Free — ver `novux-forge-roadmap-status.md`),
+o usuário reportou 3 bugs de UI e pediu a implementação das melhorias sugeridas para "app de
+gym" na sessão anterior. Tudo entregue e commitado:
+
+**Bugs de UI**
+- Ordem das abas trocada para Home, Fichas, Histórico, Exercícios (era Histórico, Home, Fichas,
+  Exercícios).
+- Filtro de grupo muscular em Exercícios cortando o texto dos chips no Android — `paddingVertical`/
+  `lineHeight` insuficientes; corrigido com mais respiro no chip e `numberOfLines={1}`.
+- Login sem logo e com "Novux Forge" cortado na base — `lineHeight` do token `display` (Syne
+  ExtraBold) muito justo para a fonte; adicionado o ícone da marca e reduzido/ajustado o texto.
+
+**Notificação do timer de descanso**
+- `expo-notifications` agenda um aviso nativo ao iniciar/ajustar o descanso (cancela e reagenda),
+  avisando o fim do descanso mesmo com a tela travada — cenário real de uso na academia, que só
+  tinha haptic in-app antes. Descoberto e corrigido no caminho: `expo-modules-core` não estava
+  no nível raiz do `node_modules` (só aninhado em `expo/node_modules`), quebrando a resolução de
+  tipos — agora é dependência explícita e deduplicada.
+
+**Fase K — Estimativa de 1RM** (`src/features/workouts/progression.ts`, pura/testada)
+
+Fórmula de Epley a partir da última execução, mostrada como referência no cabeçalho do exercício
+em treino ativo. Sem estimativa para peso corporal ou séries de mais de 12 reps.
+
+**Fase L — RPE por série**
+
+`set_logs.rpe` já existia no schema desde o início — nunca era escrita nem lida. Campo opcional
+agora no `SetRow` (não se aplica a séries de aquecimento), persistido em `finishWorkout`.
+
+**Fase I — Histórico de peso corporal**
+
+Migration `006_body_measurements` (aplicada no Supabase): tabela com RLS por usuário, uma entrada
+por dia (upsert). Card na tela de Progresso (`WeightLogCard`) com peso atual, variação desde a
+última pesagem, sparkline dos últimos registros e histórico com exclusão. Registrar peso também
+sincroniza `profiles.body_weight`.
+
+**Fase N — Exportar histórico em CSV**
+
+Botão na tela de Histórico gera um CSV (uma linha por série: data, ficha, exercício, peso, reps,
+RPE, PR) e abre o menu nativo de compartilhamento (`expo-sharing`). Geração do CSV é lógica pura
+e testada (`exportCsv.ts`).
+
+**Fase J — Correção de perda silenciosa de dados sem rede**
+
+Investigando "tratamento de offline" (item já listado na seção 4), foi encontrado um bug real:
+`finishWorkout` não checava erro de nenhum insert/update, então uma falha de rede na academia
+limpava a sessão local mesmo sem nada salvo no servidor — sem erro nenhum na tela. Como a sessão
+ativa já é persistida inteira via zustand+AsyncStorage (já funciona como "fila"), a correção foi
+checar erro em cada escrita e só limpar a sessão após confirmação completa, com limpeza prévia de
+`exercise_logs` (cascade em `set_logs`) para tornar um retry idempotente — tentar de novo após
+uma falha não duplica o que já tinha sido salvo.
+
+**Fase M — Superset**
+
+Migration `007_superset_groups` adiciona `workout_exercises.superset_group` (aplicada no
+Supabase). Suporta apenas duplas de exercícios adjacentes (não cadeias de 3+). Editor de ficha
+ganha um conector "Ligar como superset" entre exercícios adjacentes; no treino ativo, concluir uma
+série de um exercício em superset pula direto para o parceiro sem descanso — o descanso da dupla
+só começa ao concluir uma série do segundo exercício (a "âncora" do par).
+
+**Nota sobre a Fase O (sugestão de exercício substituto)**: já estava implementada desde a Fase D
+(`fetchExerciseAlternatives`/`useExerciseAlternatives`, seção "Se o aparelho estiver ocupado" na
+tela de detalhe do exercício) — uma investigação inicial mal-conduzida sugeriu o contrário; não
+houve trabalho novo aqui.
+
+---
+
 ## 3. Melhorias importadas do novux-finance e novux-mobile
 
 ### 3.1 Do **novux-mobile** (Flutter)
@@ -265,7 +334,9 @@ linter só aponta o item de configuração do painel.
   → mover o cache do RapidAPI para uma **Edge Function** com `service_role`.
 - **`mediaResolver` faz 2 requisições HEAD por exercício** antes de decidir a fonte — em lista
   isso multiplica. Persistir a fonte resolvida em `exercises.media_source` após a 1ª vez.
-- **Sem tratamento de offline** — academia costuma ter sinal ruim. Fila local de séries + sync.
+- ~~**Sem tratamento de offline**~~ ✅ o risco real não era falta de fila (a sessão ativa já é
+  persistida local via zustand+AsyncStorage) e sim `finishWorkout` limpando a sessão mesmo quando
+  a gravação remota falhava — corrigido na Fase J (seção 2.7, 2026-08-05).
 - **Sem `tsconfig` no CI, sem lint, sem testes** — nenhuma barreira antes do commit.
 - **Sem tela de perfil** — `profiles.body_weight` existe no schema e nunca é preenchido, embora
   seja necessário para exercícios de peso corporal e sugestão de carga.
@@ -285,5 +356,11 @@ linter só aponta o item de configuração do painel.
 | ✅ **R** | **Rebrand "Ember"** — nova identidade Novux (cores laranja→magenta, fontes, gradiente, ícone/splash) + tema light/dark comutável | Concluída em 2026-08-03 |
 | 🟡 **F** | **Perfil + Configurações** (peso corporal, tema, logout, refazer onboarding) + força de senha + esqueci senha | Concluída em 2026-08-03 (parcial — ver abaixo). Diferidos: unidade kg/lb, excluir conta (LGPD), termos/privacidade |
 | ✅ **G** | **Score de treino + insights + volume semanal por grupo** | Concluída em 2026-08-03 — sem schema novo nem lib de gráfico |
-| **H** | Testes + typecheck + `Skeleton`/`EmptyState`/`ErrorBoundary` + Edge Function do cache de mídia | Sustentação |
-| **I** | Coach IA, importação CSV, gates premium | Expansão |
+| 🟡 **H** | Testes + typecheck + `Skeleton`/`EmptyState`/`ErrorBoundary` + Edge Function do cache de mídia | Sustentação — testes/typecheck/UI primitives concluídos em 2026-08-05; **Edge Function do cache de mídia ainda pendente** (exige conversa de design/segurança, ver seção 4) |
+| ✅ **K** | Estimativa de 1RM (Epley) no treino ativo | Concluída em 2026-08-05 — lógica pura testada, sem schema novo |
+| ✅ **L** | RPE por série | Concluída em 2026-08-05 — coluna já existia (`set_logs.rpe`), nunca era escrita nem lida |
+| ✅ **I** | Histórico de peso corporal | Concluída em 2026-08-05 — migration `006`, card na tela de Progresso |
+| ✅ **N** | Exportar histórico em CSV | Concluída em 2026-08-05 — `expo-sharing`, lógica pura testada |
+| ✅ **J** | Corrige perda silenciosa de dados ao finalizar treino sem rede | Concluída em 2026-08-05 — bug real em `finishWorkout`, não uma fila nova (ver seção 2.7) |
+| ✅ **M** | Superset (dupla de exercícios sem descanso entre si) | Concluída em 2026-08-05 — migration `007`, só duplas adjacentes |
+| **P** | Coach IA, importação CSV, gates premium | Expansão (letra "I" antiga, renomeada para não colidir com a Fase I de peso corporal) |
