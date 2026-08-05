@@ -22,6 +22,13 @@ export async function fetchExerciseById(id: string): Promise<Exercise> {
   return data as Exercise;
 }
 
+/** Sem vídeo curado, abre a busca no YouTube — melhor que um link curado que quebra. */
+export function videoUrlFor(exercise: Exercise): string {
+  if (exercise.video_url) return exercise.video_url;
+  const query = encodeURIComponent(`${exercise.name} execução correta`);
+  return `https://www.youtube.com/results?search_query=${query}`;
+}
+
 export interface ExerciseAlternative {
   id: string;
   name: string;

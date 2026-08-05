@@ -14,7 +14,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ExercisePickerModal } from '@/components/workout';
+import { ExerciseHowToModal, ExercisePickerModal } from '@/components/workout';
 import { Button, Input, Skeleton, SkeletonGroup } from '@/components/ui';
 import {
   useAddExercisesToWorkout,
@@ -51,6 +51,7 @@ export default function WorkoutEditorScreen() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [newName, setNewName] = useState('');
+  const [howToId, setHowToId] = useState<string | null>(null);
 
   const workout = data?.workout;
   const exercises = data?.exercises ?? [];
@@ -178,6 +179,7 @@ export default function WorkoutEditorScreen() {
               exercise={ex}
               onMove={(dir) => handleMove(i, dir)}
               onRemove={() => handleRemove(ex)}
+              onPressInfo={() => setHowToId(ex.exercise_id)}
               onPatch={(patch) => updateExercise.mutate({ id: ex.id, patch })}
             />
           ))
@@ -205,6 +207,8 @@ export default function WorkoutEditorScreen() {
         alreadyAddedIds={exercises.map((e) => e.exercise_id)}
         onConfirm={handleAdd}
       />
+
+      <ExerciseHowToModal exerciseId={howToId} onClose={() => setHowToId(null)} />
 
       {/* Modal de renomear */}
       <Modal visible={renameOpen} transparent animationType="fade" onRequestClose={() => setRenameOpen(false)}>
@@ -245,6 +249,7 @@ interface RowProps {
   exercise: WorkoutExerciseDetailed;
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
+  onPressInfo: () => void;
   onPatch: (patch: {
     default_sets?: number;
     default_reps?: number;
@@ -253,7 +258,7 @@ interface RowProps {
   }) => void;
 }
 
-function ExerciseRow({ index, total, exercise, onMove, onRemove, onPatch }: RowProps) {
+function ExerciseRow({ index, total, exercise, onMove, onRemove, onPressInfo, onPatch }: RowProps) {
   const { colors } = useTheme();
   const rowStyles = useMemo(() => makeRowStyles(colors), [colors]);
   const [sets, setSets] = useState(String(exercise.default_sets));
@@ -308,6 +313,9 @@ function ExerciseRow({ index, total, exercise, onMove, onRemove, onPatch }: RowP
           </Text>
         </View>
         <View style={rowStyles.actions}>
+          <TouchableOpacity onPress={onPressInfo} hitSlop={6}>
+            <Feather name="info" size={17} color={colors.accent.default} />
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => onMove(-1)} disabled={index === 0} hitSlop={6}>
             <Feather
               name="chevron-up"

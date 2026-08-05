@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { RestTimerBar, SetRow, WorkoutTimer } from '@/components/workout';
+import { ExerciseHowToModal, RestTimerBar, SetRow, WorkoutTimer } from '@/components/workout';
 import { Skeleton, SkeletonGroup } from '@/components/ui';
 import { useAuth } from '@/features/auth/useAuth';
 import {
@@ -142,6 +142,7 @@ function ActiveWorkoutScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const haptics = useHaptics();
   const [finishing, setFinishing] = useState(false);
+  const [howToId, setHowToId] = useState<string | null>(null);
   const {
     workoutName,
     startedAt,
@@ -290,7 +291,12 @@ function ActiveWorkoutScreen() {
       {currentEx && (
         <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
           <View style={styles.exHeader}>
-            <Text style={styles.exName}>{currentEx.exerciseName}</Text>
+            <View style={styles.exNameRow}>
+              <Text style={styles.exName}>{currentEx.exerciseName}</Text>
+              <TouchableOpacity onPress={() => setHowToId(currentEx.exerciseId)} hitSlop={8}>
+                <Feather name="info" size={18} color={colors.accent.default} />
+              </TouchableOpacity>
+            </View>
             <Text style={styles.exProgress}>
               {currentEx.sets.filter((s) => s.completed).length}/{currentEx.sets.length} séries
             </Text>
@@ -389,6 +395,8 @@ function ActiveWorkoutScreen() {
           onSkip={rest.stop}
         />
       )}
+
+      <ExerciseHowToModal exerciseId={howToId} onClose={() => setHowToId(null)} />
     </SafeAreaView>
   );
 }
@@ -555,7 +563,8 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     gap: spacing.lg,
   },
   exHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
-  exName:     { ...typography.h3, color: colors.text.primary, flex: 1 },
+  exNameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
+  exName:     { ...typography.h3, color: colors.text.primary, flexShrink: 1 },
   exProgress: { ...typography.bodySmall, color: colors.text.secondary },
   exNotes: {
     ...typography.bodySmall,

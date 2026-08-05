@@ -15,6 +15,7 @@ import { SafeScreen } from '@/components/layout';
 import { ScreenHeader } from '@/components/layout';
 import { ExerciseMedia } from '@/components/workout';
 import { useExercise, useExerciseAlternatives } from '@/features/exercises/useExercises';
+import { videoUrlFor } from '@/features/exercises/exerciseService';
 import { Exercise } from '@/types/workout';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
@@ -34,13 +35,6 @@ const DIFFICULTY_LABEL: Record<Exercise['difficulty'], string> = {
   intermediate: 'Intermediário',
   advanced:     'Avançado',
 };
-
-/** Sem vídeo curado, abre a busca no YouTube — melhor que um link quebrado */
-function videoUrlFor(exercise: Exercise): string {
-  if (exercise.video_url) return exercise.video_url;
-  const query = encodeURIComponent(`${exercise.name} execução correta`);
-  return `https://www.youtube.com/results?search_query=${query}`;
-}
 
 function Badge({ label, color }: { label: string; color?: string }) {
   const { colors } = useTheme();
