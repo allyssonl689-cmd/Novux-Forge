@@ -21,6 +21,9 @@ const config: ExpoConfig = {
     supportsTablet: true,
   },
   android: {
+    // Obrigatório para build standalone (EAS Build) — Expo Go não exige,
+    // mas um APK instalável precisa de um identificador de pacote fixo.
+    package: 'com.novux.forge',
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
       backgroundColor: BRAND_BG,
@@ -36,6 +39,8 @@ const config: ExpoConfig = {
     supabaseUrl:     process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     rapidApiKey:     process.env.EXPO_PUBLIC_RAPIDAPI_KEY ?? null,
+    // `eas.projectId` é preenchido automaticamente pelo `eas init`
+    // (precisa de login — não dá para gerar sem a conta do usuário).
   },
 };
 
