@@ -1,4 +1,3 @@
-import * as FileSystem from 'expo-file-system';
 import { supabase } from './supabase';
 
 const FREE_DB_BASE =
@@ -7,6 +6,12 @@ const FREE_DB_BASE =
 export type MediaResult = {
   type: 'gif' | 'jpg';
   uri: string;
+  /**
+   * Quadros para animar poses estáticas (início → fim) dentro do app.
+   * Presente só na Camada 3 (Free DB), que fornece 2 fotos por exercício.
+   * GIFs já são animados, então não usam este campo.
+   */
+  frames?: string[];
   source: 'storage' | 'rapidapi' | 'free-db';
 };
 
@@ -42,8 +47,14 @@ export async function resolveExerciseMedia(
     }
   }
 
-  // CAMADA 3: Free Exercise DB (fallback estático)
-  return { type: 'jpg', uri: `${FREE_DB_BASE}/${freeDbId}/0.jpg`, source: 'free-db' };
+  // CAMADA 3: Free Exercise DB — 2 poses (início e fim) para animar no app
+  const base = `${FREE_DB_BASE}/${freeDbId}`;
+  return {
+    type: 'jpg',
+    uri: `${base}/0.jpg`,
+    frames: [`${base}/0.jpg`, `${base}/1.jpg`],
+    source: 'free-db',
+  };
 }
 
 async function fetchAndCacheRapidApiGif(
@@ -66,24 +77,28 @@ async function fetchAndCacheRapidApiGif(
   const gifUrl: string = exercise.gifUrl;
   if (!gifUrl) return null;
 
-  const localPath = `${FileSystem.cacheDirectory}${slug}.gif`;
-  const download = await FileSystem.downloadAsync(gifUrl, localPath);
-  if (download.status !== 200) return null;
+  // Tenta cachear no Storage. Desde a migration 003 o cliente não tem mais
+  // permissão de escrita no bucket (qualquer autenticado podia sobrescrever a
+  // mídia de todos), então isso normalmente falha — e tudo bem: o GIF da CDN
+  // é usado direto e o expo-image cuida do cache local.
+  // O cache permanente volta quando o upload virar Edge Function com service_role.
+  try {
+    const gifResponse = await fetch(gifUrl);
+    if (!gifResponse.ok) return gifUrl;
 
-  const base64 = await FileSystem.readAsStringAsync(localPath, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
+    const bytes = new Uint8Array(await gifResponse.arrayBuffer());
 
-  const byteArray = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const { error } = await supabase.storage
+      .from('exercise-media')
+      .upload(`${slug}/0.gif`, bytes, {
+        contentType: 'image/gif',
+        upsert: true,
+      });
 
-  const { error } = await supabase.storage
-    .from('exercise-media')
-    .upload(`${slug}/0.gif`, byteArray, {
-      contentType: 'image/gif',
-      upsert: true,
-    });
-
-  if (error) return null;
+    if (error) return gifUrl;
+  } catch {
+    return gifUrl;
+  }
 
   const { data } = supabase.storage
     .from('exercise-media')
