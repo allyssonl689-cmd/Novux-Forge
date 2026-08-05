@@ -29,6 +29,8 @@ export interface ActiveExercise {
   lastPerformance: LastPerformance | null;
   /** true quando a carga inicial foi aumentada em relação à última vez */
   progressionApplied: boolean;
+  /** Exercícios com o mesmo valor (não nulo) formam um superset — feito em sequência, sem descanso entre si */
+  supersetGroup: number | null;
   sets: SetEntry[];
 }
 
@@ -42,6 +44,7 @@ export interface StartExerciseInput {
   defaultWeightKg: number | null;
   restSeconds: number;
   notes: string | null;
+  supersetGroup?: number | null;
   /** Última execução, buscada antes de iniciar (opcional) */
   lastPerformance?: LastPerformance | null;
 }
@@ -179,6 +182,7 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState>()(
                 notes: ex.notes,
                 lastPerformance: last,
                 progressionApplied: seed.isProgression,
+                supersetGroup: ex.supersetGroup ?? null,
                 sets: makeSets(ex.defaultSets, ex.defaultReps, seed.weightKg),
               };
             }),

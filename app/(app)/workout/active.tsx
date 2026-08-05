@@ -47,6 +47,7 @@ function toStartInput(
     defaultWeightKg: ex.default_weight_kg,
     restSeconds: ex.rest_seconds,
     notes: ex.notes,
+    supersetGroup: ex.superset_group,
     lastPerformance: lastPerformance[ex.exercise_id] ?? null,
   }));
 }
@@ -175,10 +176,30 @@ function ActiveWorkoutScreen() {
 
   async function handleCompleteSet(setIdx: number) {
     haptics.success();
-    await completeSet(currentExerciseIndex, setIdx);
-    // Inicia o descanso automaticamente, a não ser que fosse a última série
-    const ex = exercises[currentExerciseIndex];
+    const exerciseIdx = currentExerciseIndex;
+    await completeSet(exerciseIdx, setIdx);
+
+    const ex = exercises[exerciseIdx];
     const wasLastSet = ex ? setIdx === ex.sets.length - 1 : true;
+
+    // Superset: os dois exercícios do par não têm descanso entre si — vai
+    // direto para o parceiro. O descanso da dupla só começa ao concluir uma
+    // série do segundo exercício (o "âncora" do par).
+    const partnerIdx =
+      ex?.supersetGroup != null
+        ? exercises.findIndex((e, i) => i !== exerciseIdx && e.supersetGroup === ex.supersetGroup)
+        : -1;
+
+    if (partnerIdx !== -1) {
+      const isAnchor = exerciseIdx > partnerIdx;
+      if (isAnchor && ex && ex.restSeconds > 0 && !wasLastSet) {
+        rest.start(ex.restSeconds);
+      }
+      setCurrentExercise(partnerIdx);
+      return;
+    }
+
+    // Exercício solo: inicia o descanso automaticamente, a não ser que fosse a última série
     if (ex && ex.restSeconds > 0 && !wasLastSet) {
       rest.start(ex.restSeconds);
     }
@@ -284,6 +305,9 @@ function ActiveWorkoutScreen() {
               style={[styles.exTab, active && styles.exTabActive, done && styles.exTabDone]}
               onPress={() => setCurrentExercise(i)}
             >
+              {ex.supersetGroup != null && (
+                <Feather name="link" size={11} color={active ? colors.accent.default : colors.text.tertiary} />
+              )}
               <Text style={[styles.exTabLabel, active && styles.exTabLabelActive]} numberOfLines={1}>
                 {ex.exerciseName}
               </Text>

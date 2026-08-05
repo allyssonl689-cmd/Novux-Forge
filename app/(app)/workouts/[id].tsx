@@ -77,6 +77,28 @@ export default function WorkoutEditorScreen() {
     reorder.mutate(next.map((ex, i) => ({ id: ex.id, sort_order: i })));
   }
 
+  /**
+   * Superset: liga/desliga a dupla de exercícios adjacentes `index`/`index+1`.
+   * Só suporta duplas (não cadeias de 3+) — cobre o caso de uso mais comum
+   * e evita a complexidade de agrupar/desagrupar cadeias mais longas.
+   */
+  function handleToggleLink(index: number) {
+    const a = exercises[index];
+    const b = exercises[index + 1];
+    if (!a || !b) return;
+
+    haptics.light();
+    const linked = a.superset_group != null && a.superset_group === b.superset_group;
+    if (linked) {
+      updateExercise.mutate({ id: a.id, patch: { superset_group: null } });
+      updateExercise.mutate({ id: b.id, patch: { superset_group: null } });
+    } else {
+      const groupId = Date.now();
+      updateExercise.mutate({ id: a.id, patch: { superset_group: groupId } });
+      updateExercise.mutate({ id: b.id, patch: { superset_group: groupId } });
+    }
+  }
+
   function handleRemove(ex: WorkoutExerciseDetailed) {
     Alert.alert('Remover exercício', `Remover "${ex.exercise_name}" da ficha?`, [
       { text: 'Cancelar', style: 'cancel' },
@@ -171,18 +193,47 @@ export default function WorkoutEditorScreen() {
             </Text>
           </View>
         ) : (
-          exercises.map((ex, i) => (
-            <ExerciseRow
-              key={ex.id}
-              index={i}
-              total={exercises.length}
-              exercise={ex}
-              onMove={(dir) => handleMove(i, dir)}
-              onRemove={() => handleRemove(ex)}
-              onPressInfo={() => setHowToId(ex.exercise_id)}
-              onPatch={(patch) => updateExercise.mutate({ id: ex.id, patch })}
-            />
-          ))
+          exercises.map((ex, i) => {
+            const next = exercises[i + 1];
+            const linkedWithNext =
+              !!next && ex.superset_group != null && ex.superset_group === next.superset_group;
+            const isSecondOfPair =
+              i > 0 && ex.superset_group != null && ex.superset_group === exercises[i - 1].superset_group;
+            return (
+              <React.Fragment key={ex.id}>
+                <ExerciseRow
+                  index={i}
+                  total={exercises.length}
+                  exercise={ex}
+                  isSuperset={isSecondOfPair || linkedWithNext}
+                  onMove={(dir) => handleMove(i, dir)}
+                  onRemove={() => handleRemove(ex)}
+                  onPressInfo={() => setHowToId(ex.exercise_id)}
+                  onPatch={(patch) => updateExercise.mutate({ id: ex.id, patch })}
+                />
+                {next && (
+                  <TouchableOpacity
+                    style={styles.linkConnector}
+                    onPress={() => handleToggleLink(i)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.linkLine, linkedWithNext && styles.linkLineActive]} />
+                    <View style={[styles.linkPill, linkedWithNext && styles.linkPillActive]}>
+                      <Feather
+                        name="link"
+                        size={12}
+                        color={linkedWithNext ? colors.accent.default : colors.text.tertiary}
+                      />
+                      <Text style={[styles.linkLabel, linkedWithNext && styles.linkLabelActive]}>
+                        {linkedWithNext ? 'Superset' : 'Ligar como superset'}
+                      </Text>
+                    </View>
+                    <View style={[styles.linkLine, linkedWithNext && styles.linkLineActive]} />
+                  </TouchableOpacity>
+                )}
+              </React.Fragment>
+            );
+          })
         )}
 
         <TouchableOpacity style={styles.addExerciseBtn} onPress={() => setPickerOpen(true)}>
@@ -247,6 +298,7 @@ interface RowProps {
   index: number;
   total: number;
   exercise: WorkoutExerciseDetailed;
+  isSuperset: boolean;
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
   onPressInfo: () => void;
@@ -258,7 +310,7 @@ interface RowProps {
   }) => void;
 }
 
-function ExerciseRow({ index, total, exercise, onMove, onRemove, onPressInfo, onPatch }: RowProps) {
+function ExerciseRow({ index, total, exercise, isSuperset, onMove, onRemove, onPressInfo, onPatch }: RowProps) {
   const { colors } = useTheme();
   const rowStyles = useMemo(() => makeRowStyles(colors), [colors]);
   const [sets, setSets] = useState(String(exercise.default_sets));
@@ -307,7 +359,14 @@ function ExerciseRow({ index, total, exercise, onMove, onRemove, onPressInfo, on
           <Text style={rowStyles.orderText}>{index + 1}</Text>
         </View>
         <View style={rowStyles.nameWrapper}>
-          <Text style={rowStyles.name} numberOfLines={2}>{exercise.exercise_name}</Text>
+          <View style={rowStyles.nameRow}>
+            <Text style={rowStyles.name} numberOfLines={2}>{exercise.exercise_name}</Text>
+            {isSuperset && (
+              <View style={rowStyles.supersetBadge}>
+                <Feather name="link" size={10} color={colors.accent.default} />
+              </View>
+            )}
+          </View>
           <Text style={rowStyles.meta}>
             {exercise.muscle_group} · {exercise.equipment}
           </Text>
@@ -439,6 +498,29 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   emptyTitle: { ...typography.h3, color: colors.text.primary },
   emptyText: { ...typography.body, color: colors.text.secondary, textAlign: 'center' },
 
+  linkConnector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing['3xl'],
+  },
+  linkLine: { flex: 1, height: 1, backgroundColor: colors.border.default },
+  linkLineActive: { backgroundColor: colors.accent.border },
+  linkPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    backgroundColor: colors.bg.elevated,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+  },
+  linkPillActive: { backgroundColor: colors.accent.dim, borderColor: colors.accent.border },
+  linkLabel: { ...typography.labelSmall, color: colors.text.tertiary },
+  linkLabelActive: { color: colors.accent.default },
+
   addExerciseBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -509,7 +591,16 @@ const makeRowStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   orderText: { ...typography.labelSmall, color: colors.text.secondary },
   nameWrapper: { flex: 1, gap: 2 },
-  name: { ...typography.subheading, color: colors.text.primary },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  supersetBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: radius.full,
+    backgroundColor: colors.accent.dim,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  name: { ...typography.subheading, color: colors.text.primary, flexShrink: 1 },
   meta: { ...typography.bodySmall, color: colors.text.secondary },
   actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
 

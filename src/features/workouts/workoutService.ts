@@ -192,7 +192,13 @@ export async function updateWorkoutExercise(
   patch: Partial<
     Pick<
       WorkoutExercise,
-      'default_sets' | 'default_reps' | 'default_weight_kg' | 'rest_seconds' | 'notes' | 'sort_order'
+      | 'default_sets'
+      | 'default_reps'
+      | 'default_weight_kg'
+      | 'rest_seconds'
+      | 'notes'
+      | 'sort_order'
+      | 'superset_group'
     >
   >,
 ): Promise<void> {

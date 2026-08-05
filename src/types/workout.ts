@@ -58,6 +58,8 @@ export interface WorkoutExercise {
   rest_seconds: number;
   notes: string | null;
   created_at: string;
+  /** Exercícios da mesma ficha com o mesmo valor (não nulo) formam um superset */
+  superset_group: number | null;
 }
 
 export interface WorkoutLog {
