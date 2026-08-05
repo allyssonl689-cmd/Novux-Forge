@@ -19,7 +19,7 @@ values
  'Halter', 'Empurrão', 'intermediate',
  ARRAY['Ajuste o banco a 30–45°.','Segure um halter em cada mão na altura do peito, com as palmas voltadas para frente.','Pressione os halteres para cima até que os braços estejam quase estendidos.','Desça de forma controlada até o nível do peito.'],
  ARRAY['Ângulo de 30° ativa mais o peitoral que 45°','Gire levemente os pulsos ao subir'],
- 'Dumbbell_Incline_Bench_Press', '0303'),
+ 'Incline_Dumbbell_Press', '0303'),
 
 ('Crucifixo com Halteres',
  'crucifixo-halteres', 'Peito',
@@ -35,7 +35,7 @@ values
  'Máquina', 'Puxada', 'beginner',
  ARRAY['Sente-se e posicione as coxas sob o apoio.','Segure a barra com pegada pronada, mais larga que os ombros.','Puxe a barra em direção à parte superior do peito, trazendo os cotovelos para baixo.','Pause um segundo ao final e retorne de forma controlada.'],
  ARRAY['Incline levemente o tronco para trás','Não balance o corpo para puxar mais carga'],
- 'Front_Lat_Pulldown', '0320'),
+ 'Wide-Grip_Lat_Pulldown', '0320'),
 
 ('Remada Curvada com Barra',
  'remada-curvada-barra', 'Costas',
@@ -43,7 +43,7 @@ values
  'Barra', 'Puxada', 'intermediate',
  ARRAY['Segure a barra com pegada pronada e incline o tronco a ~45°.','Mantenha a coluna neutra com o core ativado.','Puxe a barra em direção ao abdômen inferior, retraindo as escápulas.','Desça a barra até os braços estarem estendidos.'],
  ARRAY['Evite usar a lombar para puxar','Cotovelos próximos ao corpo para foco no dorsal'],
- 'Barbell_Bent_Over_Row', '0032'),
+ 'Bent_Over_Barbell_Row', '0032'),
 
 ('Puxada com Pegada Supinada',
  'puxada-supinada', 'Costas',
@@ -59,7 +59,7 @@ values
  'Barra', 'Empurrão', 'intermediate',
  ARRAY['Em pé (ou sentado), segure a barra na frente do pescoço, na altura dos ombros.','Pressione a barra para cima até os braços estenderem.','Desça de forma controlada até o ponto de partida.'],
  ARRAY['Core contraído para proteger a lombar','Não hiperestenda o pescoço ao subir'],
- 'Barbell_Military_Press', '0052'),
+ 'Standing_Military_Press', '0052'),
 
 ('Elevação Lateral com Halteres',
  'elevacao-lateral-halteres', 'Ombro',
@@ -67,7 +67,7 @@ values
  'Halter', 'Empurrão', 'beginner',
  ARRAY['Em pé, segure um halter em cada mão ao lado do corpo.','Eleve os braços lateralmente até a altura dos ombros, com leve flexão no cotovelo.','Desça de forma controlada.'],
  ARRAY['Incline levemente o tronco para frente','Controle a descida — o excêntrico importa'],
- 'Dumbbell_Lateral_Raise', '0290'),
+ 'Side_Lateral_Raise', '0290'),
 
 ('Agachamento Livre com Barra',
  'agachamento-livre-barra', 'Quadríceps',
@@ -91,7 +91,7 @@ values
  'Halter', 'Pernas', 'intermediate',
  ARRAY['Em pé, segure um halter em cada mão à frente das coxas.','Incline o tronco para frente com a coluna neutra, descendo os halteres.','Sinta o alongamento nos isquiotibiais até ~45–60°.','Contraia os glúteos ao retornar à posição inicial.'],
  ARRAY['Joelhos levemente flexionados','Não arredonde a lombar','Desça somente até onde a flexibilidade permitir'],
- 'Dumbbell_Romanian_Deadlift', '0329'),
+ 'Stiff-Legged_Dumbbell_Deadlift', '0329'),
 
 ('Cadeira Extensora',
  'cadeira-extensora', 'Quadríceps',
