@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { cancelRestEndNotification, scheduleRestEndNotification } from '@/lib/restNotifications';
 
 export function useTimer(autoStart = false) {
   const [seconds, setSeconds] = useState(0);
@@ -35,6 +36,19 @@ export function useRestTimer(onDone?: () => void) {
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
 
+  // Notificação nativa agendada para o fim do descanso — avisa mesmo com a
+  // tela travada, quando o haptic in-app não é percebido.
+  const notificationIdRef = useRef<string | null>(null);
+
+  const rescheduleNotification = useCallback((seconds: number) => {
+    const pending = notificationIdRef.current;
+    notificationIdRef.current = null;
+    cancelRestEndNotification(pending);
+    scheduleRestEndNotification(seconds).then((id) => {
+      notificationIdRef.current = id;
+    });
+  }, []);
+
   const clear = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -52,14 +66,18 @@ export function useRestTimer(onDone?: () => void) {
       setTotal(seconds);
       setSecondsLeft(seconds);
       setRunning(true);
+      rescheduleNotification(seconds);
     },
-    [clear],
+    [clear, rescheduleNotification],
   );
 
   const stop = useCallback(() => {
     clear();
     setRunning(false);
     setSecondsLeft(0);
+    const pending = notificationIdRef.current;
+    notificationIdRef.current = null;
+    cancelRestEndNotification(pending);
   }, [clear]);
 
   /** Soma/subtrai segundos ao descanso em andamento (ex.: −15 / +15) */
@@ -67,9 +85,10 @@ export function useRestTimer(onDone?: () => void) {
     setSecondsLeft((s) => {
       const next = Math.max(0, s + delta);
       setTotal((t) => Math.max(t, next));
+      rescheduleNotification(next);
       return next;
     });
-  }, []);
+  }, [rescheduleNotification]);
 
   useEffect(() => {
     if (!running) return;
@@ -78,6 +97,7 @@ export function useRestTimer(onDone?: () => void) {
         if (s <= 1) {
           clear();
           setRunning(false);
+          notificationIdRef.current = null;
           onDoneRef.current?.();
           return 0;
         }
@@ -86,6 +106,14 @@ export function useRestTimer(onDone?: () => void) {
     }, 1000);
     return clear;
   }, [running, clear]);
+
+  // Se a tela some com o descanso rolando (voltar, sair do treino), cancela
+  // o aviso pendente em vez de deixar disparar fora de contexto.
+  useEffect(() => {
+    return () => {
+      cancelRestEndNotification(notificationIdRef.current);
+    };
+  }, []);
 
   return { total, secondsLeft, running, start, stop, adjust };
 }

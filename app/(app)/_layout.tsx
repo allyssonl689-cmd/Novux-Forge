@@ -27,16 +27,16 @@ export default function AppLayout() {
       }}
     >
       <Tabs.Screen
-        name="history"
-        options={{ title: 'Histórico', tabBarIcon: ({ color }) => <Feather name="clock" size={22} color={color} /> }}
-      />
-      <Tabs.Screen
         name="index"
         options={{ title: 'Home', tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} /> }}
       />
       <Tabs.Screen
         name="workouts"
         options={{ title: 'Fichas', tabBarIcon: ({ color }) => <Feather name="clipboard" size={22} color={color} /> }}
+      />
+      <Tabs.Screen
+        name="history"
+        options={{ title: 'Histórico', tabBarIcon: ({ color }) => <Feather name="clock" size={22} color={color} /> }}
       />
       <Tabs.Screen
         name="exercises"

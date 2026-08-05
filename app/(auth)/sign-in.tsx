@@ -12,13 +12,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { z } from 'zod';
 import { SafeScreen } from '@/components/layout';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/features/auth/useAuth';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
-import { fonts, spacing, typography } from '@/theme';
+import { fonts, radius, spacing, typography } from '@/theme';
 
 const schema = z.object({
   email:    z.string().email('E-mail inválido'),
@@ -81,6 +82,11 @@ export default function SignInScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
+            <Image
+              source={require('../../assets/images/icon.png')}
+              style={styles.logo}
+              contentFit="contain"
+            />
             <Text style={styles.brand}>Novux Forge</Text>
             <Text style={styles.tagline}>Seu tracking de treinos</Text>
           </View>
@@ -153,7 +159,15 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   flex:        { flex: 1 },
   container:   { flexGrow: 1, justifyContent: 'center', paddingHorizontal: spacing['2xl'], paddingVertical: spacing['4xl'] },
   header:      { alignItems: 'center', marginBottom: spacing['4xl'] },
-  brand:       { ...typography.display, color: colors.text.primary, textAlign: 'center' },
+  logo:        { width: 72, height: 72, borderRadius: radius.xl, marginBottom: spacing.lg },
+  brand:       {
+    ...typography.display,
+    fontSize: 34,
+    lineHeight: 44,
+    letterSpacing: -0.5,
+    color: colors.text.primary,
+    textAlign: 'center',
+  },
   tagline:     { ...typography.body, color: colors.text.secondary, textAlign: 'center', marginTop: spacing.sm },
   form:        { gap: spacing.lg },
   btnPrimary:  { marginTop: spacing.sm },

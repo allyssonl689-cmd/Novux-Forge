@@ -102,7 +102,10 @@ export default function ExercisesScreen() {
               onPress={() => setActiveGroup(group)}
               activeOpacity={0.75}
             >
-              <Text style={[styles.filterLabel, active && styles.filterLabelActive]}>
+              <Text
+                style={[styles.filterLabel, active && styles.filterLabelActive]}
+                numberOfLines={1}
+              >
                 {group}
               </Text>
             </TouchableOpacity>
@@ -205,15 +208,17 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   },
 
   // Filtros
-  filtersScroll: { maxHeight: 44, marginBottom: spacing.sm },
+  filtersScroll: { maxHeight: 56, marginBottom: spacing.sm },
   filtersRow: {
     paddingHorizontal: spacing['2xl'],
+    paddingVertical: spacing.xs,
     gap: spacing.sm,
     alignItems: 'center',
   },
   filterChip: {
+    flexShrink: 0,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.sm,
     borderRadius: radius.full,
     backgroundColor: colors.bg.elevated,
     borderWidth: 1,
@@ -223,7 +228,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.accent.dim,
     borderColor: colors.accent.border,
   },
-  filterLabel: { ...typography.label, color: colors.text.secondary },
+  filterLabel: { ...typography.label, lineHeight: 18, color: colors.text.secondary },
   filterLabelActive: { color: colors.accent.default },
 
   // Lista

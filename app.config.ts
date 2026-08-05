@@ -35,7 +35,15 @@ const config: ExpoConfig = {
     bundler: 'metro',
     favicon: './assets/images/favicon.png',
   },
-  plugins: ['expo-router'],
+  plugins: [
+    'expo-router',
+    [
+      'expo-notifications',
+      {
+        color: BRAND_PRIMARY,
+      },
+    ],
+  ],
   extra: {
     brandColor: BRAND_PRIMARY,
     supabaseUrl:     process.env.EXPO_PUBLIC_SUPABASE_URL,
