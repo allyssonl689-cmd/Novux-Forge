@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
-import { colors, radius, spacing, typography } from '@/theme';
+import { useTheme } from '@/theme';
+import { ThemeColors } from '@/theme/palette';
+import { radius, spacing, typography } from '@/theme';
 
 interface Props extends TextInputProps {
   label?: string;
@@ -8,6 +10,9 @@ interface Props extends TextInputProps {
 }
 
 export function Input({ label, error, style, ...rest }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <View style={styles.wrapper}>
       {label && <Text style={styles.label}>{label}</Text>}
@@ -21,19 +26,20 @@ export function Input({ label, error, style, ...rest }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  wrapper: { gap: spacing.sm },
-  label: { ...typography.label, color: colors.text.secondary },
-  input: {
-    height: 52,
-    backgroundColor: colors.bg.elevated,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border.default,
-    paddingHorizontal: spacing.lg,
-    ...typography.body,
-    color: colors.text.primary,
-  },
-  inputError: { borderColor: colors.feedback.danger },
-  errorText: { ...typography.bodySmall, color: colors.feedback.danger },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    wrapper: { gap: spacing.sm },
+    label: { ...typography.label, color: colors.text.secondary },
+    input: {
+      height: 52,
+      backgroundColor: colors.bg.elevated,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border.default,
+      paddingHorizontal: spacing.lg,
+      ...typography.body,
+      color: colors.text.primary,
+    },
+    inputError: { borderColor: colors.feedback.danger },
+    errorText: { ...typography.bodySmall, color: colors.feedback.danger },
+  });

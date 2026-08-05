@@ -1,8 +1,10 @@
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { colors, spacing, typography } from '@/theme';
+import { useTheme } from '@/theme';
+import { ThemeColors } from '@/theme/palette';
+import { spacing, typography } from '@/theme';
 
 interface Props {
   title: string;
@@ -12,6 +14,9 @@ interface Props {
 
 export function ScreenHeader({ title, showBack, right }: Props) {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       {showBack ? (
@@ -25,15 +30,16 @@ export function ScreenHeader({ title, showBack, right }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  title: { ...typography.h3, color: colors.text.primary },
-  backBtn: { padding: spacing.sm },
-  placeholder: { width: 38 },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+    },
+    title: { ...typography.h3, color: colors.text.primary },
+    backBtn: { padding: spacing.sm },
+    placeholder: { width: 38 },
+  });
