@@ -1,8 +1,9 @@
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -12,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistory } from '@/features/history/useHistory';
 import { WorkoutLogSummary } from '@/features/history/historyService';
+import { exportHistoryCsv } from '@/features/history/exportService';
 import { formatTime } from '@/lib/utils';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
@@ -66,14 +68,37 @@ export default function HistoryScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { data: logs = [], isLoading, isError, refetch } = useHistory();
+  const [exporting, setExporting] = useState(false);
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      await exportHistoryCsv();
+    } catch (err: any) {
+      Alert.alert('Erro ao exportar', err?.message ?? 'Tente novamente.');
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
       {/* Cabeçalho */}
       <View style={styles.header}>
-        <Text style={styles.title}>Histórico</Text>
-        {!isLoading && (
-          <Text style={styles.subtitle}>{logs.length} treino{logs.length !== 1 ? 's' : ''}</Text>
+        <View>
+          <Text style={styles.title}>Histórico</Text>
+          {!isLoading && (
+            <Text style={styles.subtitle}>{logs.length} treino{logs.length !== 1 ? 's' : ''}</Text>
+          )}
+        </View>
+        {!isLoading && logs.length > 0 && (
+          <TouchableOpacity style={styles.exportBtn} onPress={handleExport} disabled={exporting} hitSlop={8}>
+            {exporting ? (
+              <ActivityIndicator size="small" color={colors.text.secondary} />
+            ) : (
+              <Feather name="download" size={18} color={colors.text.secondary} />
+            )}
+          </TouchableOpacity>
         )}
       </View>
 
@@ -134,6 +159,16 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   title:    { ...typography.h2, color: colors.text.primary },
   subtitle: { ...typography.bodySmall, color: colors.text.tertiary },
+  exportBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    backgroundColor: colors.bg.elevated,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   // Card
   list:      { paddingHorizontal: spacing['2xl'], paddingTop: spacing.md, paddingBottom: spacing['4xl'] },
