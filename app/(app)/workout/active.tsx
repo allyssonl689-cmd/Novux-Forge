@@ -1,18 +1,647 @@
-import React from 'react';
-import { StyleSheet, Text } from 'react-native';
-import { SafeScreen } from '@/components/layout';
-import { ScreenHeader } from '@/components/layout';
-import { colors, spacing, typography } from '@/theme';
+import { Feather } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { RestTimerBar, SetRow, WorkoutTimer } from '@/components/workout';
+import { useAuth } from '@/features/auth/useAuth';
+import {
+  StartExerciseInput,
+  useActiveWorkoutStore,
+} from '@/features/workouts/activeWorkoutStore';
+import { fetchLastPerformance } from '@/features/workouts/lastPerformanceService';
+import { formatLastPerformance } from '@/features/workouts/progression';
+import { useWorkouts } from '@/features/workouts/useWorkouts';
+import {
+  fetchWorkoutWithExercises,
+  WorkoutExerciseDetailed,
+  WorkoutSummary,
+} from '@/features/workouts/workoutService';
+import { useHaptics } from '@/hooks/useHaptics';
+import { useElapsedSeconds, useRestTimer } from '@/hooks/useTimer';
+import { useTheme } from '@/theme';
+import { ThemeColors } from '@/theme/palette';
+import { radius, spacing, typography } from '@/theme';
 
-export default function ActiveWorkoutScreen() {
+/** Converte os exercícios da ficha no formato que o store usa para montar as séries */
+function toStartInput(
+  exercises: WorkoutExerciseDetailed[],
+  lastPerformance: Record<string, { weightKg: number; reps: number | null }>,
+): StartExerciseInput[] {
+  return exercises.map((ex, i) => ({
+    exerciseId: ex.exercise_id,
+    exerciseName: ex.exercise_name,
+    sortOrder: ex.sort_order ?? i,
+    defaultSets: ex.default_sets,
+    defaultReps: ex.default_reps,
+    defaultWeightKg: ex.default_weight_kg,
+    restSeconds: ex.rest_seconds,
+    notes: ex.notes,
+    lastPerformance: lastPerformance[ex.exercise_id] ?? null,
+  }));
+}
+
+// ─── Tela de seleção de ficha ────────────────────────────────────────────────
+
+function WorkoutPickerScreen({
+  onPick,
+  startingId,
+}: {
+  onPick: (w: WorkoutSummary) => void;
+  startingId: string | null;
+}) {
+  const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { data: workouts = [], isLoading } = useWorkouts();
+
   return (
-    <SafeScreen>
-      <ScreenHeader title="Treino Ativo" showBack />
-      <Text style={styles.placeholder}>Tela de treino ativo — Fase 5</Text>
-    </SafeScreen>
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+          <Feather name="x" size={22} color={colors.text.secondary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Escolher ficha</Text>
+        <View style={{ width: 38 }} />
+      </View>
+
+      {isLoading ? (
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.accent.default} />
+          <Text style={styles.muted}>Carregando fichas…</Text>
+        </View>
+      ) : workouts.length === 0 ? (
+        <View style={styles.center}>
+          <Feather name="inbox" size={32} color={colors.text.tertiary} />
+          <Text style={styles.muted}>Nenhuma ficha criada ainda</Text>
+          <TouchableOpacity
+            style={styles.linkBtn}
+            onPress={() => router.replace('/(app)/workouts')}
+          >
+            <Text style={styles.linkLabel}>Montar minha primeira ficha</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={workouts}
+          keyExtractor={(w) => w.id}
+          contentContainerStyle={styles.pickerList}
+          ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
+          renderItem={({ item }) => {
+            const empty = item.exercise_count === 0;
+            return (
+              <TouchableOpacity
+                style={[styles.pickerCard, empty && styles.pickerCardDisabled]}
+                onPress={() => onPick(item)}
+                activeOpacity={0.75}
+                disabled={startingId !== null}
+              >
+                <View style={styles.pickerCardLeft}>
+                  <Text style={styles.pickerName}>{item.name}</Text>
+                  <Text style={styles.pickerMeta}>
+                    {item.category ? `${item.category} · ` : ''}
+                    {item.exercise_count} exercício{item.exercise_count === 1 ? '' : 's'}
+                  </Text>
+                </View>
+                {startingId === item.id ? (
+                  <ActivityIndicator color={colors.accent.default} />
+                ) : (
+                  <Feather
+                    name="play-circle"
+                    size={24}
+                    color={empty ? colors.text.tertiary : colors.accent.default}
+                  />
+                )}
+              </TouchableOpacity>
+            );
+          }}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  placeholder: { ...typography.body, color: colors.text.secondary, textAlign: 'center', marginTop: spacing['4xl'] },
+// ─── Tela de execução do treino ──────────────────────────────────────────────
+
+function ActiveWorkoutScreen() {
+  const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const haptics = useHaptics();
+  const [finishing, setFinishing] = useState(false);
+  const {
+    workoutName,
+    startedAt,
+    exercises,
+    currentExerciseIndex,
+    setCurrentExercise,
+    updateSet,
+    completeSet,
+    uncompleteSet,
+    addSet,
+    removeSet,
+    finishWorkout,
+    discardWorkout,
+  } = useActiveWorkoutStore();
+
+  // O cronômetro deriva do início da sessão — reabrir o app não zera o tempo
+  const seconds = useElapsedSeconds(startedAt);
+  const rest = useRestTimer(() => haptics.heavy());
+
+  const currentEx = exercises[currentExerciseIndex];
+
+  const completedSets = exercises.reduce(
+    (acc, ex) => acc + ex.sets.filter((s) => s.completed).length,
+    0,
+  );
+  const totalSets = exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
+
+  async function handleCompleteSet(setIdx: number) {
+    haptics.success();
+    await completeSet(currentExerciseIndex, setIdx);
+    // Inicia o descanso automaticamente, a não ser que fosse a última série
+    const ex = exercises[currentExerciseIndex];
+    const wasLastSet = ex ? setIdx === ex.sets.length - 1 : true;
+    if (ex && ex.restSeconds > 0 && !wasLastSet) {
+      rest.start(ex.restSeconds);
+    }
+  }
+
+  function handleFinish() {
+    if (completedSets === 0) {
+      Alert.alert(
+        'Nenhuma série concluída',
+        'Finalizar agora não vai registrar nada no histórico. Deseja descartar o treino?',
+        [
+          { text: 'Continuar treinando', style: 'cancel' },
+          { text: 'Descartar', style: 'destructive', onPress: handleDiscardConfirmed },
+        ],
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Finalizar treino',
+      `${completedSets} de ${totalSets} séries concluídas. Deseja finalizar?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Finalizar',
+          onPress: async () => {
+            rest.stop();
+            setFinishing(true);
+            try {
+              await finishWorkout();
+              haptics.heavy();
+              router.replace('/(app)');
+            } catch {
+              setFinishing(false);
+              haptics.error();
+              Alert.alert('Erro', 'Não foi possível salvar o treino. Tente novamente.');
+            }
+          },
+        },
+      ],
+    );
+  }
+
+  async function handleDiscardConfirmed() {
+    rest.stop();
+    await discardWorkout();
+    router.replace('/(app)');
+  }
+
+  function handleDiscard() {
+    Alert.alert('Descartar treino', 'Todo o progresso será perdido. Tem certeza?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Descartar', style: 'destructive', onPress: handleDiscardConfirmed },
+    ]);
+  }
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleDiscard} style={styles.headerBtn}>
+          <Feather name="x" size={22} color={colors.text.secondary} />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle} numberOfLines={1}>{workoutName}</Text>
+          <WorkoutTimer seconds={seconds} />
+        </View>
+        <TouchableOpacity style={styles.finishBtn} onPress={handleFinish} disabled={finishing}>
+          {finishing ? (
+            <ActivityIndicator size="small" color={colors.text.inverse} />
+          ) : (
+            <Text style={styles.finishLabel}>Finalizar</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Progresso global */}
+      <View style={styles.progressBar}>
+        <View
+          style={[
+            styles.progressFill,
+            { width: `${totalSets > 0 ? (completedSets / totalSets) * 100 : 0}%` },
+          ]}
+        />
+      </View>
+
+      {/* Tabs de exercícios */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.exTabs}
+        style={styles.exTabsScroll}
+      >
+        {exercises.map((ex, i) => {
+          const done = ex.sets.every((s) => s.completed);
+          const active = i === currentExerciseIndex;
+          return (
+            <TouchableOpacity
+              key={ex.exerciseId}
+              style={[styles.exTab, active && styles.exTabActive, done && styles.exTabDone]}
+              onPress={() => setCurrentExercise(i)}
+            >
+              <Text style={[styles.exTabLabel, active && styles.exTabLabelActive]} numberOfLines={1}>
+                {ex.exerciseName}
+              </Text>
+              {done && <Feather name="check" size={12} color={colors.accent.default} />}
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* Corpo — séries do exercício atual */}
+      {currentEx && (
+        <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+          <View style={styles.exHeader}>
+            <Text style={styles.exName}>{currentEx.exerciseName}</Text>
+            <Text style={styles.exProgress}>
+              {currentEx.sets.filter((s) => s.completed).length}/{currentEx.sets.length} séries
+            </Text>
+          </View>
+
+          {currentEx.notes && <Text style={styles.exNotes}>{currentEx.notes}</Text>}
+
+          {/* Última execução e sugestão de progressão */}
+          {(currentEx.lastPerformance || currentEx.progressionApplied) && (
+            <View style={styles.lastRow}>
+              {currentEx.lastPerformance && (
+                <View style={styles.lastChip}>
+                  <Feather name="rotate-ccw" size={12} color={colors.text.secondary} />
+                  <Text style={styles.lastLabel}>
+                    Última vez: {formatLastPerformance(currentEx.lastPerformance)}
+                  </Text>
+                </View>
+              )}
+              {currentEx.progressionApplied && (
+                <View style={styles.progressionChip}>
+                  <Feather name="trending-up" size={12} color={colors.accent.default} />
+                  <Text style={styles.progressionLabel}>Carga sugerida acima da última</Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          <View style={styles.tableHeader}>
+            <Text style={[styles.tableCol, { width: 28 }]}>Série</Text>
+            <Text style={[styles.tableCol, { flex: 1 }]}>Peso</Text>
+            <Text style={[styles.tableCol, { flex: 1 }]}>Reps</Text>
+            <Text style={[styles.tableCol, { width: 80 }]}></Text>
+          </View>
+
+          <View style={styles.setsList}>
+            {currentEx.sets.map((set, si) => (
+              <SetRow
+                key={set.id}
+                set={set}
+                onChangeWeight={(val) =>
+                  updateSet(currentExerciseIndex, si, {
+                    weightKg: val === '' ? null : parseFloat(val.replace(',', '.')) || null,
+                  })
+                }
+                onChangeReps={(val) =>
+                  updateSet(currentExerciseIndex, si, {
+                    reps: val === '' ? null : parseInt(val, 10) || null,
+                  })
+                }
+                onComplete={() => handleCompleteSet(si)}
+                onUncomplete={() => uncompleteSet(currentExerciseIndex, si)}
+                onToggleWarmup={() =>
+                  updateSet(currentExerciseIndex, si, { isWarmup: !set.isWarmup })
+                }
+                onRemove={() => removeSet(currentExerciseIndex, si)}
+              />
+            ))}
+          </View>
+
+          <TouchableOpacity
+            style={styles.addSetBtn}
+            onPress={() => { addSet(currentExerciseIndex); haptics.light(); }}
+          >
+            <Feather name="plus" size={16} color={colors.text.secondary} />
+            <Text style={styles.addSetLabel}>Adicionar série</Text>
+          </TouchableOpacity>
+
+          <View style={styles.exNav}>
+            {currentExerciseIndex > 0 && (
+              <TouchableOpacity
+                style={styles.navBtn}
+                onPress={() => setCurrentExercise(currentExerciseIndex - 1)}
+              >
+                <Feather name="arrow-left" size={16} color={colors.text.secondary} />
+                <Text style={styles.navLabel}>Anterior</Text>
+              </TouchableOpacity>
+            )}
+            {currentExerciseIndex < exercises.length - 1 && (
+              <TouchableOpacity
+                style={[styles.navBtn, styles.navBtnNext]}
+                onPress={() => setCurrentExercise(currentExerciseIndex + 1)}
+              >
+                <Text style={styles.navLabelNext}>Próximo</Text>
+                <Feather name="arrow-right" size={16} color={colors.accent.default} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </ScrollView>
+      )}
+
+      {rest.running && (
+        <RestTimerBar
+          secondsLeft={rest.secondsLeft}
+          total={rest.total}
+          onAdjust={rest.adjust}
+          onSkip={rest.stop}
+        />
+      )}
+    </SafeAreaView>
+  );
+}
+
+// ─── Orquestrador ────────────────────────────────────────────────────────────
+
+export default function WorkoutActiveRoot() {
+  const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { user } = useAuth();
+  const { workoutId: paramWorkoutId } = useLocalSearchParams<{ workoutId?: string }>();
+  const {
+    isActive,
+    hasHydrated,
+    workoutId: activeWorkoutId,
+    startWorkout,
+    discardWorkout,
+  } = useActiveWorkoutStore();
+
+  const [startingId, setStartingId] = useState<string | null>(null);
+  const autoStartHandled = useRef(false);
+
+  async function begin(workoutId: string, fallbackName: string) {
+    if (!user) return;
+    setStartingId(workoutId);
+    try {
+      const { workout, exercises } = await fetchWorkoutWithExercises(workoutId);
+
+      if (exercises.length === 0) {
+        Alert.alert(
+          'Ficha sem exercícios',
+          'Adicione exercícios a esta ficha antes de treinar.',
+          [
+            { text: 'Agora não', style: 'cancel' },
+            { text: 'Editar ficha', onPress: () => router.replace(`/(app)/workouts/${workoutId}`) },
+          ],
+        );
+        return;
+      }
+
+      // Busca a última execução de cada exercício para mostrar referência e
+      // sugerir a carga inicial. Falha aqui não impede treinar.
+      const lastPerformance = await fetchLastPerformance(
+        exercises.map((e) => e.exercise_id),
+      );
+
+      await startWorkout({
+        workoutId,
+        workoutName: workout?.name ?? fallbackName,
+        exercises: toStartInput(exercises, lastPerformance),
+        userId: user.id,
+      });
+    } catch {
+      Alert.alert('Erro', 'Não foi possível iniciar o treino.');
+    } finally {
+      setStartingId(null);
+    }
+  }
+
+  // Início automático quando a tela recebe ?workoutId= (Home, lista de fichas, editor)
+  useEffect(() => {
+    if (!hasHydrated || !user || autoStartHandled.current) return;
+    if (!paramWorkoutId) return;
+    autoStartHandled.current = true;
+
+    if (isActive) {
+      // Já há sessão em andamento — o usuário decide o que fazer com ela
+      if (activeWorkoutId === paramWorkoutId) return;
+      Alert.alert(
+        'Treino em andamento',
+        'Você já tem um treino aberto. Deseja descartá-lo e começar este?',
+        [
+          { text: 'Continuar o atual', style: 'cancel' },
+          {
+            text: 'Descartar e começar',
+            style: 'destructive',
+            onPress: async () => {
+              await discardWorkout();
+              begin(paramWorkoutId, '');
+            },
+          },
+        ],
+      );
+      return;
+    }
+
+    begin(paramWorkoutId, '');
+  }, [hasHydrated, user, paramWorkoutId, isActive, activeWorkoutId]);
+
+  // Espera a sessão persistida ser restaurada antes de decidir a tela
+  if (!hasHydrated) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.accent.default} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isActive) return <ActiveWorkoutScreen />;
+
+  return (
+    <WorkoutPickerScreen
+      onPick={(w) => begin(w.id, w.name)}
+      startingId={startingId}
+    />
+  );
+}
+
+// ─── Estilos ─────────────────────────────────────────────────────────────────
+
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.bg.base },
+
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.default,
+  },
+  headerBtn: { width: 38, alignItems: 'flex-start' },
+  headerCenter: { flex: 1, alignItems: 'center', gap: 2 },
+  headerTitle: { ...typography.label, color: colors.text.secondary },
+  finishBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
+    backgroundColor: colors.accent.default,
+    minWidth: 78,
+    alignItems: 'center',
+  },
+  finishLabel: { ...typography.label, color: colors.text.inverse },
+
+  progressBar: { height: 3, backgroundColor: colors.bg.elevated },
+  progressFill: { height: 3, backgroundColor: colors.accent.default, borderRadius: radius.full },
+
+  // Tabs exercícios
+  exTabsScroll: { maxHeight: 48, borderBottomWidth: 1, borderBottomColor: colors.border.subtle },
+  exTabs: { paddingHorizontal: spacing.lg, gap: spacing.sm, alignItems: 'center' },
+  exTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+    backgroundColor: colors.bg.elevated,
+  },
+  exTabActive: { backgroundColor: colors.accent.dim, borderWidth: 1, borderColor: colors.accent.border },
+  exTabDone:   { opacity: 0.65 },
+  exTabLabel:  { ...typography.bodySmall, color: colors.text.secondary, maxWidth: 100 },
+  exTabLabelActive: { color: colors.accent.default },
+
+  // Corpo
+  body: {
+    paddingHorizontal: spacing['2xl'],
+    paddingTop: spacing.lg,
+    paddingBottom: spacing['4xl'],
+    gap: spacing.lg,
+  },
+  exHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
+  exName:     { ...typography.h3, color: colors.text.primary, flex: 1 },
+  exProgress: { ...typography.bodySmall, color: colors.text.secondary },
+  exNotes: {
+    ...typography.bodySmall,
+    color: colors.text.secondary,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
+
+  lastRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  lastChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+    backgroundColor: colors.bg.elevated,
+  },
+  lastLabel: { ...typography.bodySmall, color: colors.text.secondary },
+  progressionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+    backgroundColor: colors.accent.dim,
+    borderWidth: 1,
+    borderColor: colors.accent.border,
+  },
+  progressionLabel: { ...typography.labelSmall, color: colors.accent.default },
+
+  tableHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  tableCol: { ...typography.label, color: colors.text.tertiary, textAlign: 'center' },
+
+  setsList: { gap: spacing.sm },
+
+  addSetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    borderStyle: 'dashed',
+  },
+  addSetLabel: { ...typography.label, color: colors.text.secondary },
+
+  exNav: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm },
+  navBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.bg.elevated,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+  },
+  navBtnNext: { marginLeft: 'auto', borderColor: colors.accent.border, backgroundColor: colors.accent.dim },
+  navLabel:     { ...typography.label, color: colors.text.secondary },
+  navLabelNext: { ...typography.label, color: colors.accent.default },
+
+  // Picker
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
+  muted:  { ...typography.body, color: colors.text.secondary },
+  linkBtn: { paddingVertical: spacing.sm, paddingHorizontal: spacing.lg },
+  linkLabel: { ...typography.label, color: colors.accent.default },
+  pickerList: { padding: spacing['2xl'] },
+  pickerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bg.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  pickerCardDisabled: { opacity: 0.6 },
+  pickerCardLeft: { flex: 1, gap: 4 },
+  pickerName: { ...typography.subheading, color: colors.text.primary },
+  pickerMeta: { ...typography.bodySmall, color: colors.text.secondary },
 });
