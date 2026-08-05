@@ -97,7 +97,7 @@ export function buildInsights(input: InsightInput): Insight[] {
     out.push({
       id: 'prs',
       severity: 'positive',
-      title: `${input.prCountRecent} recorde${input.prCountRecent > 1 ? 's' : ''} pessoal${input.prCountRecent > 1 ? 'is' : ''} nas últimas 2 semanas.`,
+      title: `${input.prCountRecent} recorde${input.prCountRecent > 1 ? 's' : ''} ${input.prCountRecent > 1 ? 'pessoais' : 'pessoal'} nas últimas 2 semanas.`,
     });
   }
 
