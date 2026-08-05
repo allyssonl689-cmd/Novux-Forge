@@ -7,6 +7,8 @@ const BRAND_PRIMARY = '#FF6B2C';
 const config: ExpoConfig = {
   name: 'Novux Forge',
   slug: 'novux-forge',
+  // Conta EAS (time), não a pessoal — evita ambiguidade de qual conta builda.
+  owner: 'novux-forges-team',
   version: '1.0.0',
   scheme: 'novuxforge',
   orientation: 'portrait',
@@ -39,8 +41,12 @@ const config: ExpoConfig = {
     supabaseUrl:     process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     rapidApiKey:     process.env.EXPO_PUBLIC_RAPIDAPI_KEY ?? null,
-    // `eas.projectId` é preenchido automaticamente pelo `eas init`
-    // (precisa de login — não dá para gerar sem a conta do usuário).
+    // Gerado por `eas init` em 2026-08-05 — vincula ao projeto
+    // @novux-forges-team/novux-forge no EAS. `app.config.ts` é dinâmico
+    // (TS), então o CLI não escreve aqui sozinho; foi copiado do output.
+    eas: {
+      projectId: 'ac5e55c0-db3b-456c-a7fc-1d1dac3a14e4',
+    },
   },
 };
 
