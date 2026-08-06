@@ -8,6 +8,8 @@ import {
   View,
 } from 'react-native';
 import { SetEntry } from '@/features/workouts/activeWorkoutStore';
+import { useUnitStore } from '@/features/settings/unitStore';
+import { toDisplayWeight, toKg } from '@/lib/units';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
 import { radius, spacing, typography } from '@/theme';
@@ -35,6 +37,17 @@ export function SetRow({
 }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const unit = useUnitStore((s) => s.unit);
+  const displayWeight = toDisplayWeight(set.weightKg, unit);
+
+  function handleWeightChange(text: string) {
+    if (unit === 'kg' || text.trim() === '') {
+      onChangeWeight(text);
+      return;
+    }
+    const parsed = parseFloat(text.replace(',', '.'));
+    onChangeWeight(isNaN(parsed) ? text : String(toKg(parsed, unit)));
+  }
 
   return (
     <View style={[styles.row, set.completed && styles.rowCompleted]}>
@@ -49,15 +62,15 @@ export function SetRow({
       <View style={styles.inputWrapper}>
         <TextInput
           style={[styles.input, set.completed && styles.inputCompleted]}
-          value={set.weightKg !== null ? String(set.weightKg) : ''}
-          onChangeText={onChangeWeight}
+          value={displayWeight !== null ? String(displayWeight) : ''}
+          onChangeText={handleWeightChange}
           placeholder="—"
           placeholderTextColor={colors.text.tertiary}
           keyboardType="decimal-pad"
           editable={!set.completed}
           selectTextOnFocus
         />
-        <Text style={styles.inputUnit}>kg</Text>
+        <Text style={styles.inputUnit}>{unit}</Text>
       </View>
 
       {/* Reps */}

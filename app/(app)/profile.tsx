@@ -16,6 +16,8 @@ import { Button, Skeleton, SkeletonGroup, useConfirm } from '@/components/ui';
 import { useAuth } from '@/features/auth/useAuth';
 import { GOAL_LABEL, LEVEL_LABEL, EQUIPMENT_LABEL } from '@/features/splits/splitService';
 import { useProfile, useUpdateProfile } from '@/features/profile/useProfile';
+import { useUnitStore } from '@/features/settings/unitStore';
+import { toDisplayWeight, toKg } from '@/lib/units';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
@@ -31,18 +33,20 @@ export default function ProfileScreen() {
 
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
+  const unit = useUnitStore((s) => s.unit);
 
   const [name, setName] = useState('');
   const [weight, setWeight] = useState('');
   const [dirty, setDirty] = useState(false);
 
-  // Popula os campos quando o perfil carrega
+  // Popula os campos quando o perfil carrega (ou a unidade muda)
   useEffect(() => {
     if (!profile) return;
     setName(profile.display_name ?? '');
-    setWeight(profile.body_weight != null ? String(profile.body_weight) : '');
+    const displayWeight = toDisplayWeight(profile.body_weight, unit);
+    setWeight(displayWeight != null ? String(displayWeight) : '');
     setDirty(false);
-  }, [profile]);
+  }, [profile, unit]);
 
   function handleSave() {
     const trimmedName = name.trim();
@@ -50,11 +54,13 @@ export default function ProfileScreen() {
       confirm({ title: 'Nome obrigatório', message: 'Informe um nome de exibição.', actions: [{ key: 'ok', label: 'OK' }] });
       return;
     }
-    const parsedWeight = weight.trim() === '' ? null : parseFloat(weight.replace(',', '.'));
-    if (parsedWeight !== null && (isNaN(parsedWeight) || parsedWeight <= 0 || parsedWeight > 400)) {
-      confirm({ title: 'Peso inválido', message: 'Informe um peso corporal válido em kg.', actions: [{ key: 'ok', label: 'OK' }] });
+    const typedWeight = weight.trim() === '' ? null : parseFloat(weight.replace(',', '.'));
+    const maxValid = unit === 'lb' ? 880 : 400;
+    if (typedWeight !== null && (isNaN(typedWeight) || typedWeight <= 0 || typedWeight > maxValid)) {
+      confirm({ title: 'Peso inválido', message: `Informe um peso corporal válido em ${unit}.`, actions: [{ key: 'ok', label: 'OK' }] });
       return;
     }
+    const parsedWeight = typedWeight !== null ? toKg(typedWeight, unit) : null;
 
     updateProfile.mutate(
       { display_name: trimmedName, body_weight: parsedWeight },
@@ -127,7 +133,7 @@ export default function ProfileScreen() {
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Peso corporal (kg)</Text>
+                <Text style={styles.fieldLabel}>Peso corporal ({unit})</Text>
                 <TextInput
                   style={styles.input}
                   value={weight}

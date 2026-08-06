@@ -15,6 +15,8 @@ import { WeightLogCard } from '@/components/stats/WeightLogCard';
 import { Severity } from '@/features/stats/insights';
 import { MuscleVolume } from '@/features/stats/statsService';
 import { useTrainingStats } from '@/features/stats/useStats';
+import { useUnitStore } from '@/features/settings/unitStore';
+import { formatVolume } from '@/lib/units';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
 import { fonts, radius, spacing, typography } from '@/theme';
@@ -33,16 +35,12 @@ function severityColor(colors: ThemeColors, s: Severity): string {
   return colors.text.secondary;
 }
 
-function formatVol(kg: number): string {
-  if (kg >= 1000) return `${(kg / 1000).toFixed(1)} t`;
-  return `${Math.round(kg)} kg`;
-}
-
 export default function ProgressScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { data: stats, isLoading, isRefetching, refetch } = useTrainingStats();
+  const unit = useUnitStore((s) => s.unit);
 
   const maxMuscle = stats?.volumeByMuscle[0]?.volumeKg ?? 0;
 
@@ -90,7 +88,7 @@ export default function ProgressScreen() {
               <Text style={styles.sectionLabel}>Volume por grupo · últimos 7 dias</Text>
               <View style={styles.card}>
                 {stats.volumeByMuscle.map((m) => (
-                  <MuscleBar key={m.muscle} item={m} max={maxMuscle} colors={colors} />
+                  <MuscleBar key={m.muscle} item={m} max={maxMuscle} colors={colors} unit={unit} />
                 ))}
               </View>
             </>
@@ -124,14 +122,15 @@ export default function ProgressScreen() {
   );
 }
 
-function MuscleBar({ item, max, colors }: { item: MuscleVolume; max: number; colors: ThemeColors }) {
+function MuscleBar({ item, max, colors, unit }: { item: MuscleVolume; max: number; colors: ThemeColors; unit: 'kg' | 'lb' }) {
   const pct = max > 0 ? item.volumeKg / max : 0;
+  const vol = formatVolume(item.volumeKg, unit);
   return (
     <View style={{ gap: 4, paddingVertical: spacing.sm }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <Text style={{ ...typography.body, color: colors.text.primary }}>{item.muscle}</Text>
         <Text style={{ fontFamily: fonts.numSemiBold, fontSize: 13, color: colors.text.secondary }}>
-          {formatVol(item.volumeKg)}
+          {vol.value} {vol.unitLabel}
         </Text>
       </View>
       <View style={{ height: 8, borderRadius: radius.full, backgroundColor: colors.bg.elevated, overflow: 'hidden' }}>

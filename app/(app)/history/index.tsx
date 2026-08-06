@@ -14,6 +14,8 @@ import { useConfirm } from '@/components/ui';
 import { useHistory } from '@/features/history/useHistory';
 import { WorkoutLogSummary } from '@/features/history/historyService';
 import { exportHistoryCsv } from '@/features/history/exportService';
+import { useUnitStore } from '@/features/settings/unitStore';
+import { formatVolume } from '@/lib/units';
 import { formatTime } from '@/lib/utils';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
@@ -24,14 +26,11 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function formatVolume(kg: number): string {
-  if (kg >= 1000) return `${(kg / 1000).toFixed(1)} t`;
-  return `${kg.toFixed(0)} kg`;
-}
-
 function HistoryCard({ log, onPress }: { log: WorkoutLogSummary; onPress: () => void }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const unit = useUnitStore((s) => s.unit);
+  const volume = formatVolume(log.total_volume_kg, unit);
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
       {/* Linha superior: nome + data */}
@@ -56,7 +55,7 @@ function HistoryCard({ log, onPress }: { log: WorkoutLogSummary; onPress: () => 
         <View style={styles.statDivider} />
         <View style={styles.stat}>
           <Feather name="trending-up" size={13} color={colors.text.tertiary} />
-          <Text style={styles.statText}>{formatVolume(log.total_volume_kg)}</Text>
+          <Text style={styles.statText}>{volume.value} {volume.unitLabel}</Text>
         </View>
       </View>
     </TouchableOpacity>

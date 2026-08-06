@@ -6,11 +6,6 @@ export function formatTime(seconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-export function formatKg(value: number | null): string {
-  if (value === null) return 'PC';
-  return `${value} kg`;
-}
-
 export function calcVolume(weightKg: number | null, reps: number | null): number {
   if (!weightKg || !reps) return 0;
   return weightKg * reps;

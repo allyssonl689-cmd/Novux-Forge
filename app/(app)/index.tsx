@@ -21,6 +21,8 @@ import { useOnboardingProfile, useWeeklyPlan } from '@/features/plan/useWeeklyPl
 import { scoreColor } from '@/components/stats/ScoreRing';
 import { useTrainingStats } from '@/features/stats/useStats';
 import { useActiveWorkoutStore } from '@/features/workouts/activeWorkoutStore';
+import { useUnitStore } from '@/features/settings/unitStore';
+import { formatVolume } from '@/lib/units';
 import { useWorkouts } from '@/features/workouts/useWorkouts';
 import { WorkoutSummary } from '@/features/workouts/workoutService';
 import { useTheme } from '@/theme';
@@ -51,6 +53,7 @@ export default function HomeScreen() {
   const { data: profile, isLoading: profileLoading } = useOnboardingProfile();
   const { data: stats } = useTrainingStats();
   const { isActive, workoutName: activeName } = useActiveWorkoutStore();
+  const unit = useUnitStore((s) => s.unit);
 
   const todayWeekday = new Date().getDay();
   const todayEntry = weeklyPlan.find((e) => e.weekday === todayWeekday);
@@ -68,15 +71,15 @@ export default function HomeScreen() {
 
     const totalVolume = thisWeek.reduce((acc: number, l: WorkoutLogSummary) => acc + (l.total_volume_kg ?? 0), 0);
     const totalSecs = thisWeek.reduce((acc: number, l: WorkoutLogSummary) => acc + (l.duration_secs ?? 0), 0);
+    const volume = formatVolume(totalVolume, unit);
 
     return {
       workouts: String(thisWeek.length),
-      volumeKg: totalVolume >= 1000
-        ? `${(totalVolume / 1000).toFixed(1)}t`
-        : `${totalVolume.toFixed(0)}`,
+      volumeValue: volume.value,
+      volumeUnit: volume.unitLabel,
       timeMin: String(Math.round(totalSecs / 60)),
     };
-  }, [history]);
+  }, [history, unit]);
 
   /**
    * Sem agenda semanal, cai na rotação: a ficha treinada há mais tempo
@@ -186,7 +189,7 @@ export default function HomeScreen() {
         <Text style={styles.sectionLabel}>Esta semana</Text>
         <View style={styles.statsRow}>
           <StatCard label="Treinos" value={weekStats.workouts} accent />
-          <StatCard label="Volume" value={weekStats.volumeKg} unit="kg" />
+          <StatCard label="Volume" value={weekStats.volumeValue} unit={weekStats.volumeUnit} />
           <StatCard label="Tempo" value={weekStats.timeMin} unit="min" />
         </View>
 

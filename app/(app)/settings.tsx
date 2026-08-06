@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useConfirm } from '@/components/ui';
 import { useAuth } from '@/features/auth/useAuth';
 import { useReminderStore } from '@/features/notifications/reminderStore';
+import { useUnitStore, WeightUnit } from '@/features/settings/unitStore';
 import { useDeleteAccount, useResetAccount, useResetOnboarding } from '@/features/profile/useProfile';
 import { clearActiveWorkoutLocal } from '@/features/workouts/activeWorkoutStore';
 import { useHaptics } from '@/hooks/useHaptics';
@@ -24,6 +25,11 @@ const THEME_OPTIONS: { value: ThemePreference; label: string; icon: React.Compon
   { value: 'light', label: 'Claro', icon: 'sun' },
   { value: 'dark', label: 'Escuro', icon: 'moon' },
   { value: 'system', label: 'Sistema', icon: 'smartphone' },
+];
+
+const UNIT_OPTIONS: { value: WeightUnit; label: string }[] = [
+  { value: 'kg', label: 'Quilos (kg)' },
+  { value: 'lb', label: 'Libras (lb)' },
 ];
 
 const REMINDER_TIME_OPTIONS: { hour: number; minute: number }[] = [
@@ -52,6 +58,8 @@ export default function SettingsScreen() {
   const reminderMinute = useReminderStore((s) => s.minute);
   const setReminderEnabled = useReminderStore((s) => s.setEnabled);
   const setReminderTime = useReminderStore((s) => s.setTime);
+  const unit = useUnitStore((s) => s.unit);
+  const setUnit = useUnitStore((s) => s.setUnit);
 
   async function handleLogout() {
     const action = await confirm({
@@ -160,6 +168,25 @@ export default function SettingsScreen() {
                 activeOpacity={0.75}
               >
                 <Feather name={opt.icon} size={18} color={active ? colors.accent.default : colors.text.secondary} />
+                <Text style={[styles.themeLabel, active && styles.themeLabelActive]}>{opt.label}</Text>
+                {active && <Feather name="check" size={18} color={colors.accent.default} />}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Unidade */}
+        <Text style={styles.sectionLabel}>Unidade de peso</Text>
+        <View style={styles.card}>
+          {UNIT_OPTIONS.map((opt, i) => {
+            const active = unit === opt.value;
+            return (
+              <TouchableOpacity
+                key={opt.value}
+                style={[styles.themeRow, i > 0 && styles.rowDivider]}
+                onPress={() => { setUnit(opt.value); haptics.light(); }}
+                activeOpacity={0.75}
+              >
                 <Text style={[styles.themeLabel, active && styles.themeLabelActive]}>{opt.label}</Text>
                 {active && <Feather name="check" size={18} color={colors.accent.default} />}
               </TouchableOpacity>

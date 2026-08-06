@@ -12,7 +12,9 @@ import { SafeScreen } from '@/components/layout';
 import { ScreenHeader } from '@/components/layout';
 import { useWorkoutLogDetail } from '@/features/history/useHistory';
 import { WorkoutLogDetail } from '@/features/history/historyService';
-import { formatTime, formatKg } from '@/lib/utils';
+import { useUnitStore } from '@/features/settings/unitStore';
+import { formatVolume, formatWeight } from '@/lib/units';
+import { formatTime } from '@/lib/utils';
 
 type ExerciseLog = WorkoutLogDetail['exercise_logs'][number];
 type SetLog = ExerciseLog['set_logs'][number];
@@ -24,11 +26,6 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR', {
     weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
   });
-}
-
-function formatVolume(kg: number): string {
-  if (kg >= 1000) return `${(kg / 1000).toFixed(1)} t`;
-  return `${kg.toFixed(0)} kg`;
 }
 
 function SummaryChip({ icon, label }: { icon: React.ComponentProps<typeof Feather>['name']; label: string }) {
@@ -47,6 +44,7 @@ export default function WorkoutLogDetailScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { data: log, isLoading, isError } = useWorkoutLogDetail(id ?? null);
+  const unit = useUnitStore((s) => s.unit);
 
   if (isLoading) {
     return (
@@ -79,6 +77,7 @@ export default function WorkoutLogDetailScreen() {
     (acc: number, el: ExerciseLog) => acc + el.set_logs.filter((s: SetLog) => s.is_personal_record).length,
     0,
   );
+  const totalVolume = formatVolume(log.total_volume_kg, unit);
 
   return (
     <SafeScreen style={styles.screen}>
@@ -95,7 +94,7 @@ export default function WorkoutLogDetailScreen() {
           )}
           <SummaryChip icon="activity" label={`${log.exercise_logs.length} exercícios`} />
           <SummaryChip icon="layers" label={`${totalSets} séries`} />
-          <SummaryChip icon="trending-up" label={formatVolume(log.total_volume_kg)} />
+          <SummaryChip icon="trending-up" label={`${totalVolume.value} ${totalVolume.unitLabel}`} />
           {totalPRs > 0 && (
             <SummaryChip icon="award" label={`${totalPRs} PR${totalPRs > 1 ? 's' : ''}`} />
           )}
@@ -117,7 +116,8 @@ export default function WorkoutLogDetailScreen() {
 
             {/* Linhas de série */}
             {el.set_logs.map((s: SetLog) => {
-              const vol = s.weight_kg && s.reps ? s.weight_kg * s.reps : null;
+              const volKg = s.weight_kg && s.reps ? s.weight_kg * s.reps : null;
+              const vol = volKg != null ? formatVolume(volKg, unit) : null;
               return (
                 <View
                   key={s.id}
@@ -127,13 +127,13 @@ export default function WorkoutLogDetailScreen() {
                     {s.is_warmup ? 'Q' : s.set_number}
                   </Text>
                   <Text style={[styles.col, styles.colData, styles.colText]}>
-                    {s.weight_kg != null ? formatKg(s.weight_kg) : 'PC'}
+                    {s.weight_kg != null ? formatWeight(s.weight_kg, unit) : 'PC'}
                   </Text>
                   <Text style={[styles.col, styles.colData, styles.colText]}>
                     {s.reps ?? (s.duration_secs ? formatTime(s.duration_secs) : '—')}
                   </Text>
                   <Text style={[styles.col, styles.colData, styles.colText]}>
-                    {vol != null ? `${vol} kg` : '—'}
+                    {vol != null ? `${vol.value} ${vol.unitLabel}` : '—'}
                   </Text>
                   <View style={{ width: 28, alignItems: 'center' }}>
                     {s.is_personal_record && (

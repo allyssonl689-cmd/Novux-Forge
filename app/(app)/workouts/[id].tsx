@@ -26,6 +26,8 @@ import {
 } from '@/features/workouts/useWorkouts';
 import { WorkoutExerciseDetailed } from '@/features/workouts/workoutService';
 import { useHaptics } from '@/hooks/useHaptics';
+import { useUnitStore } from '@/features/settings/unitStore';
+import { toDisplayWeight, toKg } from '@/lib/units';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
 import { radius, spacing, typography } from '@/theme';
@@ -342,21 +344,28 @@ interface RowProps {
 function ExerciseRow({ index, total, exercise, isSuperset, onMove, onRemove, onPressInfo, onReplace, onPatch }: RowProps) {
   const { colors } = useTheme();
   const rowStyles = useMemo(() => makeRowStyles(colors), [colors]);
+  const unit = useUnitStore((s) => s.unit);
   const [sets, setSets] = useState(String(exercise.default_sets));
   const [reps, setReps] = useState(String(exercise.default_reps));
-  const [weight, setWeight] = useState(
-    exercise.default_weight_kg !== null ? String(exercise.default_weight_kg) : '',
-  );
+  const [weight, setWeight] = useState(() => {
+    const display = toDisplayWeight(exercise.default_weight_kg, unit);
+    return display !== null ? String(display) : '';
+  });
   const [rest, setRest] = useState(String(exercise.rest_seconds));
 
   /** Só grava quando o valor realmente mudou e é válido */
   function commit(field: 'sets' | 'reps' | 'weight' | 'rest', raw: string) {
     if (field === 'weight') {
-      const parsed = raw.trim() === '' ? null : parseFloat(raw.replace(',', '.'));
-      if (parsed !== null && (isNaN(parsed) || parsed < 0)) {
-        setWeight(exercise.default_weight_kg !== null ? String(exercise.default_weight_kg) : '');
+      const restoreWeight = () => {
+        const display = toDisplayWeight(exercise.default_weight_kg, unit);
+        setWeight(display !== null ? String(display) : '');
+      };
+      const typed = raw.trim() === '' ? null : parseFloat(raw.replace(',', '.'));
+      if (typed !== null && (isNaN(typed) || typed < 0)) {
+        restoreWeight();
         return;
       }
+      const parsed = typed !== null ? toKg(typed, unit) : null;
       if (parsed !== exercise.default_weight_kg) onPatch({ default_weight_kg: parsed });
       return;
     }
@@ -441,7 +450,7 @@ function ExerciseRow({ index, total, exercise, isSuperset, onMove, onRemove, onP
           onEndEditing={() => commit('reps', reps)}
         />
         <Field
-          label="Carga"
+          label={`Carga (${unit})`}
           value={weight}
           placeholder="—"
           decimal

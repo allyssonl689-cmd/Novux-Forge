@@ -4,6 +4,7 @@
  * bateu o topo da faixa de repetições, sugere um pequeno aumento de carga;
  * caso contrário, repete a carga anterior para consolidar a técnica.
  */
+import { toDisplayWeight } from '@/lib/units';
 
 export interface LastPerformance {
   weightKg: number;
@@ -66,9 +67,16 @@ export function seedWeight(
   return { weightKg: last.weightKg, isProgression: false };
 }
 
-/** Texto curto de "última vez" — ex.: "40 kg × 10" ou "Peso corporal × 12" */
-export function formatLastPerformance(last: LastPerformance | null | undefined): string | null {
+/**
+ * Texto curto de "última vez" — ex.: "40 kg × 10" ou "Peso corporal × 12".
+ * `weightKg` é sempre o valor salvo (canônico); `unit` só troca a exibição.
+ */
+export function formatLastPerformance(
+  last: LastPerformance | null | undefined,
+  unit: 'kg' | 'lb' = 'kg',
+): string | null {
   if (!last) return null;
-  const weight = last.weightKg != null ? `${last.weightKg} kg` : 'Peso corporal';
+  const displayWeight = toDisplayWeight(last.weightKg, unit);
+  const weight = displayWeight != null ? `${displayWeight} ${unit}` : 'Peso corporal';
   return last.reps != null ? `${weight} × ${last.reps}` : weight;
 }

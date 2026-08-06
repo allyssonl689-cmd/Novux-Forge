@@ -20,6 +20,8 @@ import {
 } from '@/features/workouts/activeWorkoutStore';
 import { fetchLastPerformance } from '@/features/workouts/lastPerformanceService';
 import { estimateOneRepMax, formatLastPerformance } from '@/features/workouts/progression';
+import { useUnitStore } from '@/features/settings/unitStore';
+import { toDisplayWeight } from '@/lib/units';
 import { useWorkouts } from '@/features/workouts/useWorkouts';
 import {
   fetchWorkoutWithExercises,
@@ -163,10 +165,12 @@ function ActiveWorkoutScreen() {
   const seconds = useElapsedSeconds(startedAt);
   const rest = useRestTimer(() => haptics.heavy());
 
+  const unit = useUnitStore((s) => s.unit);
   const currentEx = exercises[currentExerciseIndex];
-  const oneRepMax = currentEx?.lastPerformance
+  const oneRepMaxKg = currentEx?.lastPerformance
     ? estimateOneRepMax(currentEx.lastPerformance.weightKg, currentEx.lastPerformance.reps)
     : null;
+  const oneRepMax = toDisplayWeight(oneRepMaxKg, unit);
 
   const completedSets = exercises.reduce(
     (acc, ex) => acc + ex.sets.filter((s) => s.completed).length,
@@ -347,7 +351,7 @@ function ActiveWorkoutScreen() {
                 <View style={styles.lastChip}>
                   <Feather name="rotate-ccw" size={12} color={colors.text.secondary} />
                   <Text style={styles.lastLabel}>
-                    Última vez: {formatLastPerformance(currentEx.lastPerformance)}
+                    Última vez: {formatLastPerformance(currentEx.lastPerformance, unit)}
                   </Text>
                 </View>
               )}
@@ -360,7 +364,7 @@ function ActiveWorkoutScreen() {
               {oneRepMax != null && (
                 <View style={styles.lastChip}>
                   <Feather name="bar-chart-2" size={12} color={colors.text.secondary} />
-                  <Text style={styles.lastLabel}>1RM est.: {oneRepMax} kg</Text>
+                  <Text style={styles.lastLabel}>1RM est.: {oneRepMax} {unit}</Text>
                 </View>
               )}
             </View>

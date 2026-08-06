@@ -12,6 +12,8 @@ import {
   useProgressPhotoUrl,
   useUploadProgressPhoto,
 } from '@/features/profile/useBodyMeasurements';
+import { useUnitStore } from '@/features/settings/unitStore';
+import { toDisplayWeight, toKg } from '@/lib/units';
 import { BodyMeasurement } from '@/types/workout';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
@@ -44,13 +46,15 @@ export function WeightLogCard() {
   const logMeasurement = useLogBodyMeasurement();
   const deleteMeasurement = useDeleteBodyMeasurement();
   const uploadPhoto = useUploadProgressPhoto();
+  const unit = useUnitStore((s) => s.unit);
   const [input, setInput] = useState('');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   const chronological = useMemo(() => measurements.slice().reverse(), [measurements]);
   const latest = measurements[0] ?? null;
   const previous = measurements[1] ?? null;
-  const delta = latest && previous ? latest.weight_kg - previous.weight_kg : null;
+  const deltaKg = latest && previous ? latest.weight_kg - previous.weight_kg : null;
+  const delta = deltaKg !== null ? toDisplayWeight(deltaKg, unit) : null;
   const hasAnyPhoto = measurements.some((m) => m.photo_path);
 
   const chartData = chronological.slice(-10);
@@ -99,13 +103,15 @@ export function WeightLogCard() {
   }
 
   function handleLog() {
-    const weight = parseFloat(input.replace(',', '.'));
-    if (isNaN(weight) || weight <= 0 || weight > 400) {
-      confirm({ title: 'Peso inválido', message: 'Informe um peso corporal válido em kg.', actions: [{ key: 'ok', label: 'OK' }] });
+    const typed = parseFloat(input.replace(',', '.'));
+    const maxValid = unit === 'lb' ? 880 : 400;
+    if (isNaN(typed) || typed <= 0 || typed > maxValid) {
+      confirm({ title: 'Peso inválido', message: `Informe um peso corporal válido em ${unit}.`, actions: [{ key: 'ok', label: 'OK' }] });
       return;
     }
+    const weightKg = toKg(typed, unit);
     logMeasurement.mutate(
-      { weightKg: weight },
+      { weightKg },
       {
         onSuccess: async (measurement) => {
           setInput('');
@@ -147,7 +153,7 @@ export function WeightLogCard() {
       <View style={styles.summaryRow}>
         <View>
           <Text style={styles.currentWeight}>
-            {latest ? `${latest.weight_kg} kg` : '—'}
+            {latest ? `${toDisplayWeight(latest.weight_kg, unit)} ${unit}` : '—'}
           </Text>
           <Text style={styles.currentLabel}>
             {latest ? `Pesagem de ${formatDate(latest.measured_at)}` : 'Sem registros ainda'}
@@ -171,7 +177,7 @@ export function WeightLogCard() {
                 { color: delta <= 0 ? colors.feedback.success : colors.amber.default },
               ]}
             >
-              {delta > 0 ? '+' : ''}{delta.toFixed(1)} kg
+              {delta > 0 ? '+' : ''}{delta.toFixed(1)} {unit}
             </Text>
           </View>
         )}
@@ -198,7 +204,7 @@ export function WeightLogCard() {
           style={styles.input}
           value={input}
           onChangeText={setInput}
-          placeholder="Peso de hoje (kg)"
+          placeholder={`Peso de hoje (${unit})`}
           placeholderTextColor={colors.text.tertiary}
           keyboardType="decimal-pad"
           returnKeyType="done"
@@ -232,7 +238,7 @@ export function WeightLogCard() {
                 </TouchableOpacity>
               )}
               <Text style={styles.historyDate}>{formatDate(m.measured_at)}</Text>
-              <Text style={styles.historyWeight}>{m.weight_kg} kg</Text>
+              <Text style={styles.historyWeight}>{toDisplayWeight(m.weight_kg, unit)} {unit}</Text>
               <TouchableOpacity onPress={() => handleDelete(m)} hitSlop={8}>
                 <Feather name="trash-2" size={14} color={colors.text.tertiary} />
               </TouchableOpacity>
