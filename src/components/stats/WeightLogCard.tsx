@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useConfirm } from '@/components/ui';
 import {
   useBodyMeasurements,
   useDeleteBodyMeasurement,
@@ -19,6 +20,7 @@ function formatDate(iso: string): string {
 
 export function WeightLogCard() {
   const { colors } = useTheme();
+  const confirm = useConfirm();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { data: measurements = [], isLoading } = useBodyMeasurements();
   const logMeasurement = useLogBodyMeasurement();
@@ -38,23 +40,28 @@ export function WeightLogCard() {
   function handleLog() {
     const weight = parseFloat(input.replace(',', '.'));
     if (isNaN(weight) || weight <= 0 || weight > 400) {
-      Alert.alert('Peso inválido', 'Informe um peso corporal válido em kg.');
+      confirm({ title: 'Peso inválido', message: 'Informe um peso corporal válido em kg.', actions: [{ key: 'ok', label: 'OK' }] });
       return;
     }
     logMeasurement.mutate(
       { weightKg: weight },
       {
         onSuccess: () => setInput(''),
-        onError: () => Alert.alert('Erro', 'Não foi possível registrar. Tente novamente.'),
+        onError: () => confirm({ title: 'Erro', message: 'Não foi possível registrar. Tente novamente.', actions: [{ key: 'ok', label: 'OK' }] }),
       },
     );
   }
 
-  function handleDelete(id: string) {
-    Alert.alert('Remover registro', 'Excluir esta pesagem do histórico?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: () => deleteMeasurement.mutate(id) },
-    ]);
+  async function handleDelete(id: string) {
+    const action = await confirm({
+      title: 'Remover registro',
+      message: 'Excluir esta pesagem do histórico?',
+      actions: [
+        { key: 'cancel', label: 'Cancelar', variant: 'secondary' },
+        { key: 'remove', label: 'Excluir', variant: 'danger' },
+      ],
+    });
+    if (action === 'remove') deleteMeasurement.mutate(id);
   }
 
   if (isLoading) return null;

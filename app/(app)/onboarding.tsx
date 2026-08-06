@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '@/components/ui';
+import { Button, useConfirm } from '@/components/ui';
 import {
   DAYS_OPTIONS,
   EQUIPMENT_OPTIONS,
@@ -38,6 +37,7 @@ const TOTAL_STEPS = 5;
 export default function OnboardingScreen() {
   const router = useRouter();
   const haptics = useHaptics();
+  const confirm = useConfirm();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -90,7 +90,7 @@ export default function OnboardingScreen() {
     } catch {
       setCreating(false);
       haptics.error();
-      Alert.alert('Erro', 'Não foi possível montar seu plano. Tente novamente.');
+      confirm({ title: 'Erro', message: 'Não foi possível montar seu plano. Tente novamente.', actions: [{ key: 'ok', label: 'OK' }] });
     }
   }
 

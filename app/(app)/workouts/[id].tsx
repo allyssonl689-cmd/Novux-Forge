@@ -2,7 +2,6 @@ import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -15,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ExerciseHowToModal, ExercisePickerModal } from '@/components/workout';
-import { Button, Input, Skeleton, SkeletonGroup } from '@/components/ui';
+import { Button, Input, Skeleton, SkeletonGroup, useConfirm } from '@/components/ui';
 import {
   useAddExercisesToWorkout,
   useDeleteWorkout,
@@ -37,6 +36,7 @@ export default function WorkoutEditorScreen() {
   const workoutId = String(id);
   const router = useRouter();
   const haptics = useHaptics();
+  const confirm = useConfirm();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -62,7 +62,7 @@ export default function WorkoutEditorScreen() {
       selected.map((e) => ({ exercise_id: e.id })),
       {
         onSuccess: () => haptics.success(),
-        onError: () => Alert.alert('Erro', 'Não foi possível adicionar os exercícios.'),
+        onError: () => confirm({ title: 'Erro', message: 'Não foi possível adicionar os exercícios.', actions: [{ key: 'ok', label: 'OK' }] }),
       },
     );
   }
@@ -75,7 +75,7 @@ export default function WorkoutEditorScreen() {
       { id: target.id, patch: { exercise_id: newExercise.id } },
       {
         onSuccess: () => haptics.success(),
-        onError: () => Alert.alert('Erro', 'Não foi possível substituir o exercício.'),
+        onError: () => confirm({ title: 'Erro', message: 'Não foi possível substituir o exercício.', actions: [{ key: 'ok', label: 'OK' }] }),
       },
     );
   }
@@ -113,15 +113,16 @@ export default function WorkoutEditorScreen() {
     }
   }
 
-  function handleRemove(ex: WorkoutExerciseDetailed) {
-    Alert.alert('Remover exercício', `Remover "${ex.exercise_name}" da ficha?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Remover',
-        style: 'destructive',
-        onPress: () => removeExercise.mutate(ex.id),
-      },
-    ]);
+  async function handleRemove(ex: WorkoutExerciseDetailed) {
+    const action = await confirm({
+      title: 'Remover exercício',
+      message: `Remover "${ex.exercise_name}" da ficha?`,
+      actions: [
+        { key: 'cancel', label: 'Cancelar', variant: 'secondary' },
+        { key: 'remove', label: 'Remover', variant: 'danger' },
+      ],
+    });
+    if (action === 'remove') removeExercise.mutate(ex.id);
   }
 
   function handleRename() {
@@ -131,33 +132,34 @@ export default function WorkoutEditorScreen() {
       { name: trimmed },
       {
         onSuccess: () => setRenameOpen(false),
-        onError: () => Alert.alert('Erro', 'Não foi possível renomear a ficha.'),
+        onError: () => confirm({ title: 'Erro', message: 'Não foi possível renomear a ficha.', actions: [{ key: 'ok', label: 'OK' }] }),
       },
     );
   }
 
-  function handleDeleteWorkout() {
-    Alert.alert(
-      'Excluir ficha',
-      'A ficha será removida. Os treinos já realizados continuam no histórico.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: () =>
-            deleteWorkout.mutate(workoutId, {
-              onSuccess: () => router.back(),
-              onError: () => Alert.alert('Erro', 'Não foi possível excluir a ficha.'),
-            }),
-        },
+  async function handleDeleteWorkout() {
+    const action = await confirm({
+      title: 'Excluir ficha',
+      message: 'A ficha será removida. Os treinos já realizados continuam no histórico.',
+      actions: [
+        { key: 'cancel', label: 'Cancelar', variant: 'secondary' },
+        { key: 'delete', label: 'Excluir', variant: 'danger' },
       ],
-    );
+    });
+    if (action !== 'delete') return;
+    deleteWorkout.mutate(workoutId, {
+      onSuccess: () => router.back(),
+      onError: () => confirm({ title: 'Erro', message: 'Não foi possível excluir a ficha.', actions: [{ key: 'ok', label: 'OK' }] }),
+    });
   }
 
   function handleStart() {
     if (exercises.length === 0) {
-      Alert.alert('Ficha vazia', 'Adicione pelo menos um exercício antes de treinar.');
+      confirm({
+        title: 'Ficha vazia',
+        message: 'Adicione pelo menos um exercício antes de treinar.',
+        actions: [{ key: 'ok', label: 'OK' }],
+      });
       return;
     }
     router.push(`/(app)/workout/active?workoutId=${workoutId}`);

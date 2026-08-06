@@ -2,7 +2,6 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
-  Alert,
   FlatList,
   KeyboardAvoidingView,
   Modal,
@@ -13,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Input, EmptyState, Skeleton, SkeletonGroup } from '@/components/ui';
+import { Button, Input, EmptyState, Skeleton, SkeletonGroup, useConfirm } from '@/components/ui';
 import { useCreateWorkout, useWorkouts } from '@/features/workouts/useWorkouts';
 import { WorkoutSummary } from '@/features/workouts/workoutService';
 import { useHaptics } from '@/hooks/useHaptics';
@@ -29,6 +28,7 @@ export default function WorkoutsScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const haptics = useHaptics();
+  const confirm = useConfirm();
   const { data: workouts = [], isLoading, refetch, isRefetching } = useWorkouts();
   const createWorkout = useCreateWorkout();
 
@@ -54,20 +54,21 @@ export default function WorkoutsScreen() {
       router.push(`/(app)/workouts/${workout.id}`);
     } catch {
       haptics.error();
-      Alert.alert('Erro', 'Não foi possível criar a ficha. Tente novamente.');
+      confirm({ title: 'Erro', message: 'Não foi possível criar a ficha. Tente novamente.', actions: [{ key: 'ok', label: 'OK' }] });
     }
   }
 
-  function startWorkout(workout: WorkoutSummary) {
+  async function startWorkout(workout: WorkoutSummary) {
     if (workout.exercise_count === 0) {
-      Alert.alert(
-        'Ficha sem exercícios',
-        'Adicione pelo menos um exercício antes de treinar.',
-        [
-          { text: 'Agora não', style: 'cancel' },
-          { text: 'Editar ficha', onPress: () => router.push(`/(app)/workouts/${workout.id}`) },
+      const action = await confirm({
+        title: 'Ficha sem exercícios',
+        message: 'Adicione pelo menos um exercício antes de treinar.',
+        actions: [
+          { key: 'cancel', label: 'Agora não', variant: 'secondary' },
+          { key: 'edit', label: 'Editar ficha' },
         ],
-      );
+      });
+      if (action === 'edit') router.push(`/(app)/workouts/${workout.id}`);
       return;
     }
     router.push(`/(app)/workout/active?workoutId=${workout.id}`);

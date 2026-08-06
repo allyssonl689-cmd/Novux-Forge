@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,7 +15,7 @@ import { z } from 'zod';
 import { SafeScreen } from '@/components/layout';
 import { ScreenHeader } from '@/components/layout';
 import { PasswordStrength } from '@/components/auth/PasswordStrength';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, useConfirm } from '@/components/ui';
 import { useAuth } from '@/features/auth/useAuth';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
@@ -37,6 +36,7 @@ type FormData = z.infer<typeof schema>;
 export default function SignUpScreen() {
   const router = useRouter();
   const { signUp } = useAuth();
+  const confirm = useConfirm();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [loading, setLoading] = useState(false);
@@ -50,13 +50,14 @@ export default function SignUpScreen() {
     try {
       setLoading(true);
       await signUp(email, password, fullName);
-      Alert.alert(
-        'Conta criada!',
-        'Verifique seu e-mail para confirmar o cadastro e depois faça o login.',
-        [{ text: 'OK', onPress: () => router.replace('/(auth)/sign-in') }],
-      );
+      await confirm({
+        title: 'Conta criada!',
+        message: 'Verifique seu e-mail para confirmar o cadastro e depois faça o login.',
+        actions: [{ key: 'ok', label: 'OK' }],
+      });
+      router.replace('/(auth)/sign-in');
     } catch (err: any) {
-      Alert.alert('Erro ao criar conta', err?.message ?? 'Tente novamente.');
+      confirm({ title: 'Erro ao criar conta', message: err?.message ?? 'Tente novamente.', actions: [{ key: 'ok', label: 'OK' }] });
     } finally {
       setLoading(false);
     }

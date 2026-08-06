@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ONBOARDING_KEY } from '@/features/plan/useWeeklyPlan';
 import { fetchProfile, resetOnboarding, updateProfile, UserProfile } from './profileService';
+import { resetAccountData } from './resetAccountService';
 
 export const PROFILE_KEY = ['profile'] as const;
 
@@ -28,5 +29,14 @@ export function useResetOnboarding() {
       qc.invalidateQueries({ queryKey: PROFILE_KEY });
       qc.invalidateQueries({ queryKey: ONBOARDING_KEY });
     },
+  });
+}
+
+/** Apaga histórico + fichas (ver resetAccountService) e invalida tudo — os dados voltam ao estado de conta nova */
+export function useResetAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: resetAccountData,
+    onSuccess: () => qc.invalidateQueries(),
   });
 }

@@ -22,7 +22,7 @@ import React, { useEffect } from 'react';
 import { useAuthStore } from '@/features/auth/authStore';
 import { queryClient } from '@/lib/queryClient';
 import { useTheme } from '@/theme';
-import { ErrorBoundary } from '@/components/ui';
+import { ConfirmDialogProvider, ErrorBoundary } from '@/components/ui';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -86,12 +86,14 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} backgroundColor={colors.bg.base} />
       <ErrorBoundary>
-        <AuthGate>
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg.base } }}>
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(app)" />
-          </Stack>
-        </AuthGate>
+        <ConfirmDialogProvider>
+          <AuthGate>
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg.base } }}>
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(app)" />
+            </Stack>
+          </AuthGate>
+        </ConfirmDialogProvider>
       </ErrorBoundary>
     </QueryClientProvider>
   );

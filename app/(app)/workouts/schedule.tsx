@@ -2,7 +2,6 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
-  Alert,
   Modal,
   ScrollView,
   StyleSheet,
@@ -15,7 +14,7 @@ import { WEEKDAY_LABEL } from '@/features/plan/recommendation';
 import { useSetWeekdayWorkout, useWeeklyPlan } from '@/features/plan/useWeeklyPlan';
 import { useWorkouts } from '@/features/workouts/useWorkouts';
 import { useHaptics } from '@/hooks/useHaptics';
-import { Skeleton, SkeletonGroup } from '@/components/ui';
+import { Skeleton, SkeletonGroup, useConfirm } from '@/components/ui';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
 import { radius, spacing, typography } from '@/theme';
@@ -23,6 +22,7 @@ import { radius, spacing, typography } from '@/theme';
 export default function ScheduleScreen() {
   const router = useRouter();
   const haptics = useHaptics();
+  const confirm = useConfirm();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -42,7 +42,7 @@ export default function ScheduleScreen() {
       { weekday, workoutId },
       {
         onSuccess: () => haptics.light(),
-        onError: () => Alert.alert('Erro', 'Não foi possível salvar a agenda.'),
+        onError: () => confirm({ title: 'Erro', message: 'Não foi possível salvar a agenda.', actions: [{ key: 'ok', label: 'OK' }] }),
       },
     );
   }

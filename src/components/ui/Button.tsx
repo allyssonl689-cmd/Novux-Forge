@@ -6,7 +6,7 @@ import { radius, spacing, typography } from '@/theme';
 
 interface Props extends TouchableOpacityProps {
   label: string;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   loading?: boolean;
 }
 
@@ -22,8 +22,18 @@ export function Button({ label, variant = 'primary', loading, style, disabled, .
       {...rest}
     >
       {loading
-        ? <ActivityIndicator color={variant === 'primary' ? colors.accent.on : colors.accent.default} />
-        : <Text style={[styles.label, variant !== 'primary' && styles.labelAlt]}>{label}</Text>
+        ? <ActivityIndicator color={variant === 'primary' ? colors.accent.on : variant === 'danger' ? '#FFFFFF' : colors.accent.default} />
+        : (
+          <Text
+            style={[
+              styles.label,
+              variant === 'danger' && styles.labelOnDanger,
+              (variant === 'secondary' || variant === 'ghost') && styles.labelAlt,
+            ]}
+          >
+            {label}
+          </Text>
+        )
       }
     </TouchableOpacity>
   );
@@ -49,6 +59,9 @@ const makeStyles = (colors: ThemeColors) =>
     ghost: {
       backgroundColor: 'transparent',
     },
+    danger: {
+      backgroundColor: colors.feedback.danger,
+    },
     disabled: {
       opacity: 0.45,
     },
@@ -58,5 +71,8 @@ const makeStyles = (colors: ThemeColors) =>
     },
     labelAlt: {
       color: colors.text.primary,
+    },
+    labelOnDanger: {
+      color: '#FFFFFF',
     },
   });

@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -15,7 +14,7 @@ import {
 import { Image } from 'expo-image';
 import { z } from 'zod';
 import { SafeScreen } from '@/components/layout';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, useConfirm } from '@/components/ui';
 import { useAuth } from '@/features/auth/useAuth';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
@@ -31,6 +30,7 @@ type FormData = z.infer<typeof schema>;
 export default function SignInScreen() {
   const router = useRouter();
   const { signIn, requestPasswordReset } = useAuth();
+  const confirm = useConfirm();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [loading, setLoading] = useState(false);
@@ -43,17 +43,22 @@ export default function SignInScreen() {
   async function onForgotPassword() {
     const email = getValues('email').trim();
     if (!email || !email.includes('@')) {
-      Alert.alert('Esqueci minha senha', 'Digite seu e-mail no campo acima e toque novamente.');
+      confirm({
+        title: 'Esqueci minha senha',
+        message: 'Digite seu e-mail no campo acima e toque novamente.',
+        actions: [{ key: 'ok', label: 'OK' }],
+      });
       return;
     }
     try {
       await requestPasswordReset(email);
-      Alert.alert(
-        'E-mail enviado',
-        `Enviamos um link de redefinição para ${email}. Verifique sua caixa de entrada e o spam.`,
-      );
+      confirm({
+        title: 'E-mail enviado',
+        message: `Enviamos um link de redefinição para ${email}. Verifique sua caixa de entrada e o spam.`,
+        actions: [{ key: 'ok', label: 'OK' }],
+      });
     } catch (err: any) {
-      Alert.alert('Erro', err?.message ?? 'Não foi possível enviar o e-mail.');
+      confirm({ title: 'Erro', message: err?.message ?? 'Não foi possível enviar o e-mail.', actions: [{ key: 'ok', label: 'OK' }] });
     }
   }
 
@@ -63,7 +68,7 @@ export default function SignInScreen() {
       await signIn(email, password);
       // AuthGate cuida do redirect automaticamente
     } catch (err: any) {
-      Alert.alert('Erro ao entrar', err?.message ?? 'Tente novamente.');
+      confirm({ title: 'Erro ao entrar', message: err?.message ?? 'Tente novamente.', actions: [{ key: 'ok', label: 'OK' }] });
     } finally {
       setLoading(false);
     }

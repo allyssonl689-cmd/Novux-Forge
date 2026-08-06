@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -11,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useConfirm } from '@/components/ui';
 import { useHistory } from '@/features/history/useHistory';
 import { WorkoutLogSummary } from '@/features/history/historyService';
 import { exportHistoryCsv } from '@/features/history/exportService';
@@ -65,6 +65,7 @@ function HistoryCard({ log, onPress }: { log: WorkoutLogSummary; onPress: () => 
 
 export default function HistoryScreen() {
   const router = useRouter();
+  const confirm = useConfirm();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { data: logs = [], isLoading, isError, refetch } = useHistory();
@@ -75,7 +76,7 @@ export default function HistoryScreen() {
     try {
       await exportHistoryCsv();
     } catch (err: any) {
-      Alert.alert('Erro ao exportar', err?.message ?? 'Tente novamente.');
+      confirm({ title: 'Erro ao exportar', message: err?.message ?? 'Tente novamente.', actions: [{ key: 'ok', label: 'OK' }] });
     } finally {
       setExporting(false);
     }

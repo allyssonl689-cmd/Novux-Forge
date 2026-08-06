@@ -2,7 +2,6 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,8 +9,10 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useConfirm } from '@/components/ui';
 import { useAuth } from '@/features/auth/useAuth';
-import { useResetOnboarding } from '@/features/profile/useProfile';
+import { useResetAccount, useResetOnboarding } from '@/features/profile/useProfile';
+import { clearActiveWorkoutLocal } from '@/features/workouts/activeWorkoutStore';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useTheme } from '@/theme';
 import { ThemeColors, ThemePreference } from '@/theme/palette';
@@ -26,34 +27,62 @@ const THEME_OPTIONS: { value: ThemePreference; label: string; icon: React.Compon
 export default function SettingsScreen() {
   const router = useRouter();
   const haptics = useHaptics();
+  const confirm = useConfirm();
   const { signOut } = useAuth();
   const { colors, preference, setPreference } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const resetOnboarding = useResetOnboarding();
+  const resetAccount = useResetAccount();
 
-  function handleLogout() {
-    Alert.alert('Sair da conta', 'Deseja encerrar a sessão?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: () => signOut() },
-    ]);
+  async function handleLogout() {
+    const action = await confirm({
+      title: 'Sair da conta',
+      message: 'Deseja encerrar a sessão?',
+      actions: [
+        { key: 'cancel', label: 'Cancelar', variant: 'secondary' },
+        { key: 'logout', label: 'Sair', variant: 'danger' },
+      ],
+    });
+    if (action === 'logout') signOut();
   }
 
-  function handleRedoOnboarding() {
-    Alert.alert(
-      'Refazer configuração inicial',
-      'Isso reabre o assistente que monta um plano de treino. Suas fichas atuais não são apagadas.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Refazer',
-          onPress: () =>
-            resetOnboarding.mutate(undefined, {
-              onSuccess: () => router.replace('/(app)/onboarding'),
-              onError: () => Alert.alert('Erro', 'Não foi possível reabrir o assistente.'),
-            }),
-        },
+  async function handleRedoOnboarding() {
+    const action = await confirm({
+      title: 'Refazer configuração inicial',
+      message: 'Isso reabre o assistente que monta um plano de treino. Suas fichas atuais não são apagadas.',
+      actions: [
+        { key: 'cancel', label: 'Cancelar', variant: 'secondary' },
+        { key: 'redo', label: 'Refazer' },
       ],
-    );
+    });
+    if (action !== 'redo') return;
+    resetOnboarding.mutate(undefined, {
+      onSuccess: () => router.replace('/(app)/onboarding'),
+      onError: () => confirm({ title: 'Erro', message: 'Não foi possível reabrir o assistente.', actions: [{ key: 'ok', label: 'OK' }] }),
+    });
+  }
+
+  async function handleResetAccount() {
+    const action = await confirm({
+      title: 'Resetar conta',
+      message:
+        'Isso apaga TODO o seu histórico de treinos, peso corporal registrado e todas as fichas — para sempre. Seu login continua o mesmo. Você vai refazer o assistente inicial para gerar fichas novas. Essa ação não pode ser desfeita.',
+      actions: [
+        { key: 'cancel', label: 'Cancelar', variant: 'secondary' },
+        { key: 'reset', label: 'Resetar tudo', variant: 'danger' },
+      ],
+    });
+    if (action !== 'reset') return;
+
+    resetAccount.mutate(undefined, {
+      onSuccess: () => {
+        clearActiveWorkoutLocal();
+        haptics.success();
+        router.replace('/(app)/onboarding');
+      },
+      onError: () =>
+        confirm({ title: 'Erro', message: 'Não foi possível resetar a conta. Tente novamente.', actions: [{ key: 'ok', label: 'OK' }] }),
+    });
   }
 
   return (
@@ -103,7 +132,14 @@ export default function SettingsScreen() {
         {/* Conta */}
         <Text style={styles.sectionLabel}>Conta</Text>
         <View style={styles.card}>
-          <TouchableOpacity style={styles.actionRow} onPress={handleLogout} activeOpacity={0.75}>
+          <TouchableOpacity style={styles.actionRow} onPress={handleResetAccount} activeOpacity={0.75}>
+            <Feather name="trash-2" size={18} color={colors.feedback.danger} />
+            <View style={styles.actionText}>
+              <Text style={[styles.actionLabel, { color: colors.feedback.danger }]}>Resetar conta</Text>
+              <Text style={styles.actionHint}>Apaga histórico e fichas — recomeça do zero</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionRow, styles.rowDivider]} onPress={handleLogout} activeOpacity={0.75}>
             <Feather name="log-out" size={18} color={colors.feedback.danger} />
             <Text style={[styles.actionLabel, { color: colors.feedback.danger }]}>Sair da conta</Text>
           </TouchableOpacity>

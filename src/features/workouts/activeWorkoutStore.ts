@@ -385,3 +385,12 @@ export const useActiveWorkoutStore = create<ActiveWorkoutState>()(
     },
   ),
 );
+
+/**
+ * Limpa a sessão ativa só localmente, sem tocar a rede — usado pelo reset de
+ * conta (Configurações), quando o `workout_logs` referenciado já foi apagado
+ * no servidor e manter o estado local deixaria a sessão "pendurada".
+ */
+export function clearActiveWorkoutLocal(): void {
+  useActiveWorkoutStore.setState(EMPTY_STATE);
+}

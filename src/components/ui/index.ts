@@ -5,3 +5,7 @@ export { Badge } from './Badge';
 export { Skeleton, SkeletonGroup } from './Skeleton';
 export { EmptyState } from './EmptyState';
 export { ErrorBoundary } from './ErrorBoundary';
+export { ConfirmDialog } from './ConfirmDialog';
+export type { ConfirmAction } from './ConfirmDialog';
+export { ConfirmDialogProvider, useConfirm } from './ConfirmDialogProvider';
+export type { ConfirmOptions } from './ConfirmDialogProvider';

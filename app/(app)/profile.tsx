@@ -2,7 +2,6 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Skeleton, SkeletonGroup } from '@/components/ui';
+import { Button, Skeleton, SkeletonGroup, useConfirm } from '@/components/ui';
 import { useAuth } from '@/features/auth/useAuth';
 import { GOAL_LABEL, LEVEL_LABEL, EQUIPMENT_LABEL } from '@/features/splits/splitService';
 import { useProfile, useUpdateProfile } from '@/features/profile/useProfile';
@@ -25,6 +24,7 @@ import { radius, spacing, typography } from '@/theme';
 export default function ProfileScreen() {
   const router = useRouter();
   const haptics = useHaptics();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -47,12 +47,12 @@ export default function ProfileScreen() {
   function handleSave() {
     const trimmedName = name.trim();
     if (!trimmedName) {
-      Alert.alert('Nome obrigatório', 'Informe um nome de exibição.');
+      confirm({ title: 'Nome obrigatório', message: 'Informe um nome de exibição.', actions: [{ key: 'ok', label: 'OK' }] });
       return;
     }
     const parsedWeight = weight.trim() === '' ? null : parseFloat(weight.replace(',', '.'));
     if (parsedWeight !== null && (isNaN(parsedWeight) || parsedWeight <= 0 || parsedWeight > 400)) {
-      Alert.alert('Peso inválido', 'Informe um peso corporal válido em kg.');
+      confirm({ title: 'Peso inválido', message: 'Informe um peso corporal válido em kg.', actions: [{ key: 'ok', label: 'OK' }] });
       return;
     }
 
@@ -63,7 +63,7 @@ export default function ProfileScreen() {
           haptics.success();
           setDirty(false);
         },
-        onError: () => Alert.alert('Erro', 'Não foi possível salvar. Tente novamente.'),
+        onError: () => confirm({ title: 'Erro', message: 'Não foi possível salvar. Tente novamente.', actions: [{ key: 'ok', label: 'OK' }] }),
       },
     );
   }

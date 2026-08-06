@@ -3,7 +3,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   ScrollView,
   StyleSheet,
@@ -13,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ExerciseHowToModal, RestTimerBar, SetRow, WorkoutTimer } from '@/components/workout';
-import { Skeleton, SkeletonGroup } from '@/components/ui';
+import { Skeleton, SkeletonGroup, useConfirm } from '@/components/ui';
 import { useAuth } from '@/features/auth/useAuth';
 import {
   StartExerciseInput,
@@ -142,6 +141,7 @@ function ActiveWorkoutScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const haptics = useHaptics();
+  const confirm = useConfirm();
   const [finishing, setFinishing] = useState(false);
   const [howToId, setHowToId] = useState<string | null>(null);
   const {
@@ -206,45 +206,45 @@ function ActiveWorkoutScreen() {
     }
   }
 
-  function handleFinish() {
+  async function handleFinish() {
     if (completedSets === 0) {
-      Alert.alert(
-        'Nenhuma série concluída',
-        'Finalizar agora não vai registrar nada no histórico. Deseja descartar o treino?',
-        [
-          { text: 'Continuar treinando', style: 'cancel' },
-          { text: 'Descartar', style: 'destructive', onPress: handleDiscardConfirmed },
+      const action = await confirm({
+        title: 'Nenhuma série concluída',
+        message: 'Finalizar agora não vai registrar nada no histórico. Deseja descartar o treino?',
+        actions: [
+          { key: 'cancel', label: 'Continuar treinando', variant: 'secondary' },
+          { key: 'discard', label: 'Descartar', variant: 'danger' },
         ],
-      );
+      });
+      if (action === 'discard') handleDiscardConfirmed();
       return;
     }
 
-    Alert.alert(
-      'Finalizar treino',
-      `${completedSets} de ${totalSets} séries concluídas. Deseja finalizar?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Finalizar',
-          onPress: async () => {
-            rest.stop();
-            setFinishing(true);
-            try {
-              await finishWorkout();
-              haptics.heavy();
-              router.replace('/(app)');
-            } catch {
-              setFinishing(false);
-              haptics.error();
-              Alert.alert(
-                'Falha ao salvar',
-                'Sem conexão ou o Supabase não respondeu. Seus dados continuam aqui — toque em "Finalizar" de novo quando a conexão voltar.',
-              );
-            }
-          },
-        },
+    const action = await confirm({
+      title: 'Finalizar treino',
+      message: `${completedSets} de ${totalSets} séries concluídas. Deseja finalizar?`,
+      actions: [
+        { key: 'cancel', label: 'Cancelar', variant: 'secondary' },
+        { key: 'finish', label: 'Finalizar' },
       ],
-    );
+    });
+    if (action !== 'finish') return;
+
+    rest.stop();
+    setFinishing(true);
+    try {
+      await finishWorkout();
+      haptics.heavy();
+      router.replace('/(app)');
+    } catch {
+      setFinishing(false);
+      haptics.error();
+      confirm({
+        title: 'Falha ao salvar',
+        message: 'Sem conexão ou o Supabase não respondeu. Seus dados continuam aqui — toque em "Finalizar" de novo quando a conexão voltar.',
+        actions: [{ key: 'ok', label: 'OK' }],
+      });
+    }
   }
 
   async function handleDiscardConfirmed() {
@@ -253,11 +253,16 @@ function ActiveWorkoutScreen() {
     router.replace('/(app)');
   }
 
-  function handleDiscard() {
-    Alert.alert('Descartar treino', 'Todo o progresso será perdido. Tem certeza?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Descartar', style: 'destructive', onPress: handleDiscardConfirmed },
-    ]);
+  async function handleDiscard() {
+    const action = await confirm({
+      title: 'Descartar treino',
+      message: 'Todo o progresso será perdido. Tem certeza?',
+      actions: [
+        { key: 'cancel', label: 'Cancelar', variant: 'secondary' },
+        { key: 'discard', label: 'Descartar', variant: 'danger' },
+      ],
+    });
+    if (action === 'discard') handleDiscardConfirmed();
   }
 
   return (
@@ -451,6 +456,7 @@ export default function WorkoutActiveRoot() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { user } = useAuth();
+  const confirm = useConfirm();
   const { workoutId: paramWorkoutId } = useLocalSearchParams<{ workoutId?: string }>();
   const {
     isActive,
@@ -470,14 +476,15 @@ export default function WorkoutActiveRoot() {
       const { workout, exercises } = await fetchWorkoutWithExercises(workoutId);
 
       if (exercises.length === 0) {
-        Alert.alert(
-          'Ficha sem exercícios',
-          'Adicione exercícios a esta ficha antes de treinar.',
-          [
-            { text: 'Agora não', style: 'cancel' },
-            { text: 'Editar ficha', onPress: () => router.replace(`/(app)/workouts/${workoutId}`) },
+        const action = await confirm({
+          title: 'Ficha sem exercícios',
+          message: 'Adicione exercícios a esta ficha antes de treinar.',
+          actions: [
+            { key: 'cancel', label: 'Agora não', variant: 'secondary' },
+            { key: 'edit', label: 'Editar ficha' },
           ],
-        );
+        });
+        if (action === 'edit') router.replace(`/(app)/workouts/${workoutId}`);
         return;
       }
 
@@ -494,7 +501,7 @@ export default function WorkoutActiveRoot() {
         userId: user.id,
       });
     } catch {
-      Alert.alert('Erro', 'Não foi possível iniciar o treino.');
+      confirm({ title: 'Erro', message: 'Não foi possível iniciar o treino.', actions: [{ key: 'ok', label: 'OK' }] });
     } finally {
       setStartingId(null);
     }
@@ -509,21 +516,20 @@ export default function WorkoutActiveRoot() {
     if (isActive) {
       // Já há sessão em andamento — o usuário decide o que fazer com ela
       if (activeWorkoutId === paramWorkoutId) return;
-      Alert.alert(
-        'Treino em andamento',
-        'Você já tem um treino aberto. Deseja descartá-lo e começar este?',
-        [
-          { text: 'Continuar o atual', style: 'cancel' },
-          {
-            text: 'Descartar e começar',
-            style: 'destructive',
-            onPress: async () => {
-              await discardWorkout();
-              begin(paramWorkoutId, '');
-            },
-          },
-        ],
-      );
+      (async () => {
+        const action = await confirm({
+          title: 'Treino em andamento',
+          message: 'Você já tem um treino aberto. Deseja descartá-lo e começar este?',
+          actions: [
+            { key: 'cancel', label: 'Continuar o atual', variant: 'secondary' },
+            { key: 'discard', label: 'Descartar e começar', variant: 'danger' },
+          ],
+        });
+        if (action === 'discard') {
+          await discardWorkout();
+          begin(paramWorkoutId, '');
+        }
+      })();
       return;
     }
 

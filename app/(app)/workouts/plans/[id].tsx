@@ -3,7 +3,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '@/components/ui';
+import { Button, useConfirm } from '@/components/ui';
 import {
   EQUIPMENT_LABEL,
   GOAL_LABEL,
@@ -30,6 +29,7 @@ export default function PlanDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const haptics = useHaptics();
+  const confirm = useConfirm();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -44,10 +44,11 @@ export default function PlanDetailScreen() {
   const alreadyApplied =
     !!split && split.days.length > 0 && split.days.every((d) => appliedDayIds.includes(d.id));
 
-  function handleApply() {
+  async function handleApply() {
     if (!split) return;
 
-    const run = async () => {
+    async function run() {
+      if (!split) return;
       try {
         const workouts = await applySplit.mutateAsync(split);
 
@@ -63,43 +64,48 @@ export default function PlanDetailScreen() {
         }
 
         haptics.success();
-        Alert.alert(
-          'Plano aplicado',
-          `${workouts.length} ficha${workouts.length > 1 ? 's' : ''} criada${workouts.length > 1 ? 's' : ''}.` +
+        const next = await confirm({
+          title: 'Plano aplicado',
+          message:
+            `${workouts.length} ficha${workouts.length > 1 ? 's' : ''} criada${workouts.length > 1 ? 's' : ''}.` +
             (scheduled
               ? ' Já deixei a semana montada — dá para trocar os dias na agenda.'
               : ' Sua agenda da semana não foi alterada.'),
-          [
-            { text: 'Ver minhas fichas', onPress: () => router.replace('/(app)/workouts') },
-            { text: 'Ajustar agenda', onPress: () => router.replace('/(app)/workouts/schedule') },
+          actions: [
+            { key: 'workouts', label: 'Ver minhas fichas', variant: 'secondary' },
+            { key: 'schedule', label: 'Ajustar agenda' },
           ],
-        );
+        });
+        if (next === 'workouts') router.replace('/(app)/workouts');
+        if (next === 'schedule') router.replace('/(app)/workouts/schedule');
       } catch {
         haptics.error();
-        Alert.alert('Erro', 'Não foi possível criar as fichas. Tente novamente.');
+        confirm({ title: 'Erro', message: 'Não foi possível criar as fichas. Tente novamente.', actions: [{ key: 'ok', label: 'OK' }] });
       }
-    };
+    }
 
     if (alreadyApplied) {
-      Alert.alert(
-        'Plano já aplicado',
-        'Você já tem as fichas deste plano. Aplicar de novo vai criar cópias duplicadas.',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Criar mesmo assim', onPress: run },
+      const action = await confirm({
+        title: 'Plano já aplicado',
+        message: 'Você já tem as fichas deste plano. Aplicar de novo vai criar cópias duplicadas.',
+        actions: [
+          { key: 'cancel', label: 'Cancelar', variant: 'secondary' },
+          { key: 'apply', label: 'Criar mesmo assim' },
         ],
-      );
+      });
+      if (action === 'apply') run();
       return;
     }
 
-    Alert.alert(
-      'Usar este plano',
-      `Serão criadas ${split.days.length} fichas — uma para cada dia da divisão. Suas fichas atuais não são alteradas.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Criar fichas', onPress: run },
+    const action = await confirm({
+      title: 'Usar este plano',
+      message: `Serão criadas ${split.days.length} fichas — uma para cada dia da divisão. Suas fichas atuais não são alteradas.`,
+      actions: [
+        { key: 'cancel', label: 'Cancelar', variant: 'secondary' },
+        { key: 'apply', label: 'Criar fichas' },
       ],
-    );
+    });
+    if (action === 'apply') run();
   }
 
   if (isLoading || !split) {
