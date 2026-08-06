@@ -49,8 +49,10 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (!initialized) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    // Termos/Privacidade são públicos — precisam abrir a partir do cadastro, sem login.
+    const isPublicPage = segments[0] === 'terms' || segments[0] === 'privacy';
 
-    if (!session && !inAuthGroup) {
+    if (!session && !inAuthGroup && !isPublicPage) {
       router.replace('/(auth)/sign-in');
     } else if (session && inAuthGroup) {
       router.replace('/(app)');
@@ -103,6 +105,8 @@ export default function RootLayout() {
             <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg.base } }}>
               <Stack.Screen name="(auth)" />
               <Stack.Screen name="(app)" />
+              <Stack.Screen name="terms" />
+              <Stack.Screen name="privacy" />
             </Stack>
           </AuthGate>
         </ConfirmDialogProvider>

@@ -266,6 +266,21 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Legal */}
+        <Text style={styles.sectionLabel}>Sobre</Text>
+        <View style={styles.card}>
+          <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/terms')} activeOpacity={0.75}>
+            <Feather name="file-text" size={18} color={colors.text.secondary} />
+            <Text style={[styles.actionLabel, styles.actionText]}>Termos de Uso</Text>
+            <Feather name="chevron-right" size={18} color={colors.text.tertiary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionRow, styles.rowDivider]} onPress={() => router.push('/privacy')} activeOpacity={0.75}>
+            <Feather name="shield" size={18} color={colors.text.secondary} />
+            <Text style={[styles.actionLabel, styles.actionText]}>Política de Privacidade</Text>
+            <Feather name="chevron-right" size={18} color={colors.text.tertiary} />
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.version}>Novux Forge · v1.0.0</Text>
       </ScrollView>
     </SafeAreaView>

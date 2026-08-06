@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { z } from 'zod';
 import { SafeScreen } from '@/components/layout';
 import { ScreenHeader } from '@/components/layout';
@@ -40,6 +41,7 @@ export default function SignUpScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -149,10 +151,29 @@ export default function SignUpScreen() {
               )}
             />
 
+            <TouchableOpacity style={styles.agreeRow} onPress={() => setAgreed((v) => !v)} activeOpacity={0.75}>
+              <Feather
+                name={agreed ? 'check-square' : 'square'}
+                size={18}
+                color={agreed ? colors.accent.default : colors.text.tertiary}
+              />
+              <Text style={styles.agreeText}>
+                Li e aceito os{' '}
+                <Text style={styles.agreeLink} onPress={() => router.push('/terms')}>
+                  Termos de Uso
+                </Text>
+                {' '}e a{' '}
+                <Text style={styles.agreeLink} onPress={() => router.push('/privacy')}>
+                  Política de Privacidade
+                </Text>
+              </Text>
+            </TouchableOpacity>
+
             <Button
               label="Criar conta"
               onPress={handleSubmit(onSubmit)}
               loading={loading}
+              disabled={!agreed}
               style={styles.btnPrimary}
             />
           </View>
@@ -176,6 +197,9 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   flex:       { flex: 1 },
   container:  { flexGrow: 1, paddingHorizontal: spacing['2xl'], paddingTop: spacing['2xl'], paddingBottom: spacing['4xl'] },
   form:       { gap: spacing.lg },
+  agreeRow:   { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, paddingRight: spacing.md },
+  agreeText:  { ...typography.bodySmall, color: colors.text.secondary, flex: 1, lineHeight: 18 },
+  agreeLink:  { color: colors.accent.default, fontFamily: fonts.semiBold },
   btnPrimary: { marginTop: spacing.sm },
   footer:     { flexDirection: 'row', justifyContent: 'center', gap: spacing.xs, marginTop: spacing['3xl'] },
   footerText: { ...typography.body, color: colors.text.secondary },
