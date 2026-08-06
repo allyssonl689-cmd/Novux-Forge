@@ -264,12 +264,20 @@ só começa ao concluir uma série do segundo exercício (a "âncora" do par).
 tela de detalhe do exercício) — uma investigação inicial mal-conduzida sugeriu o contrário; não
 houve trabalho novo aqui.
 
-**Catálogo de exercícios — 69 → 71** (`seed/005_catalog_enrichment.sql`): usuário procurou
-"Crucifixo na Máquina" e não achou — já existia como "Voador (Peck Deck)", só renomeado para
-incluir os dois termos. "Gravitron" (estação de puxada/mergulho assistidos) não existia — 2
-exercícios novos, `free_db_id` deliberadamente `null` nos dois: o Free Exercise DB não tem um GIF
-do aparelho assistido de verdade (o candidato mais próximo, `Dip_Machine`, é uma máquina de
-tríceps sentado — outro aparelho), então prevalece a busca no YouTube em vez de um GIF errado.
+**Catálogo de exercícios — 69 → 71 → 107** (`seed/005_catalog_enrichment.sql` e
+`seed/006_catalog_expansion.sql`): usuário procurou "Crucifixo na Máquina" e não achou — já
+existia como "Voador (Peck Deck)", só renomeado para incluir os dois termos. "Gravitron" (estação
+de puxada/mergulho assistidos) não existia — 2 exercícios novos, `free_db_id` deliberadamente
+`null` nos dois: o Free Exercise DB não tem um GIF do aparelho assistido de verdade (o candidato
+mais próximo, `Dip_Machine`, é uma máquina de tríceps sentado — outro aparelho), então prevalece
+a busca no YouTube em vez de um GIF errado.
+
+Na sequência, o usuário perguntou quantos exercícios existem no catálogo aberto (Free Exercise
+DB tem 873 no total; usávamos 69 com mídia) e pediu uma expansão. Escolhida a escala "moderada"
+(~30-40) entre as opções apresentadas: 36 exercícios novos, priorizando os grupos mais rasos
+(trapézio 1→3, lombar 1→2, antebraço 2→4, panturrilha 3→5, glúteos 4→7, isquiotibiais 4→5) e
+complementando peito/ombro/bíceps/tríceps/costas/quadríceps/core com variações de máquina/cabo
+ainda não cobertas. Todos os `free_db_id` validados (arquivo existe, 2 imagens) antes de entrar.
 
 ---
 
