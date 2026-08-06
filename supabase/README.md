@@ -18,6 +18,13 @@ Os seeds são idempotentes: rodar de novo não duplica dados.
 | 11 | `migrations/007_superset_groups.sql` | Coluna `workout_exercises.superset_group` — agrupa exercícios em superset |
 | 12 | `seed/005_catalog_enrichment.sql` | Renomeia "Voador" para incluir "Crucifixo na Máquina"; adiciona Puxada e Mergulho Assistidos (Gravitron) — 69 → 71 exercícios |
 | 13 | `seed/006_catalog_expansion.sql` | Expansão moderada: 36 exercícios novos, priorizando trapézio/lombar/antebraço/panturrilha/glúteos (mais rasos) — 71 → 107 exercícios |
+| 14 | `migrations/008_progress_photos.sql` | Coluna `body_measurements.photo_path` + bucket privado `progress-photos` com RLS por pasta de usuário |
+
+## Edge Functions
+
+| Função | O que faz |
+|---|---|
+| `delete-account` | Exclusão de conta (LGPD) — valida o JWT do chamador, limpa fotos de progresso no Storage e chama `auth.admin.deleteUser` (cascade apaga todo o resto). Deploy via MCP `mcp__supabase__deploy_edge_function` — código em `supabase/functions/delete-account/index.ts` (roda em Deno, fora do `tsconfig.json` do app). |
 
 > **A ordem importa entre 4 e 5.** O seed de planos referencia exercícios por `slug`;
 > se o catálogo ampliado não estiver carregado, os exercícios faltantes são ignorados

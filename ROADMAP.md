@@ -151,8 +151,9 @@ Entregue:
 - **Esqueci minha senha** no login: `resetPasswordForEmail`. O reset em si acontece pelo link do
   e-mail (fluxo web) — **sem deep link no app ainda**.
 
-Diferido (escolha do usuário): **unidade kg/lb** (cruza muitas telas), **excluir conta LGPD**
-(exige Edge Function com service_role), **Termos/Privacidade**.
+Diferido (escolha do usuário): **unidade kg/lb** (cruza muitas telas), **Termos/Privacidade**.
+~~**Excluir conta LGPD**~~ ✅ implementada em 2026-08-06 (seção 2.8) — era a única que
+dependia de Edge Function; as outras duas continuam de fato deferidas.
 
 ### 2.4 Execução prática de cada exercício — ✅ Fase D (2026-07-31)
 
@@ -281,6 +282,44 @@ ainda não cobertas. Todos os `free_db_id` validados (arquivo existe, 2 imagens)
 
 ---
 
+## 2.8 Lembrete de treino, fotos de progresso e exclusão de conta (2026-08-06)
+
+Três sugestões da sessão anterior, implementadas a pedido do usuário.
+
+**Lembrete diário de treino** — `src/lib/workoutReminders.ts` agenda uma notificação semanal
+recorrente (`SchedulableTriggerInputTypes.WEEKLY`) por dia com ficha marcada na `weekly_plan`;
+dias de descanso não recebem nada. Conteúdo (nome da ficha) é fixado no momento do agendamento —
+notificação local não executa código do app ao disparar, então não dá para consultar o banco em
+tempo real. `useWorkoutReminders()` reagenda tudo sempre que a agenda ou a preferência mudam,
+montado uma vez em `AuthGate` (app/_layout.tsx) para ficar sempre ativo na sessão. Preferência
+(ligado/desligado + horário, 4 opções de 06h a 09h) persistida em `reminderStore.ts`, exposta em
+Configurações. `ensureNotificationPermission` foi extraído de `restNotifications.ts` para
+`src/lib/notificationPermission.ts` e reaproveitado pelos dois módulos.
+
+**Fotos de progresso** — nova dependência `expo-image-picker` (câmera + galeria). Bucket
+`progress-photos` **privado** (migration `008`, diferente do `exercise-media` que é público de
+propósito) — fotos do corpo não têm por que ser legíveis por qualquer um; RLS restringe cada
+usuário à própria pasta (`{user_id}/...` via `storage.foldername`). Foto fica opcionalmente
+anexada à mesma linha de `body_measurements` do dia (`photo_path`); ao registrar o peso, o app
+oferece anexar uma foto na hora. Leitura via signed URL (1h, cacheada por `useProgressPhotoUrl`).
+Nova tela `app/(app)/progress-photos.tsx`: compara duas fotos lado a lado (seletores "Antes"/
+"Depois") com a variação de peso entre elas. Apagar uma pesagem também apaga a foto do Storage —
+e o **resetar conta** (Fase anterior) foi atualizado para limpar as fotos órfãs antes de apagar
+as linhas de `body_measurements`, já que Storage não tem cascade com a tabela.
+
+**Excluir conta (LGPD)** — único item pendente da Fase F que exigia Edge Function. Todas as
+tabelas de dados do usuário já referenciavam `auth.users(id) on delete cascade` desde o início
+(`profiles`, `workouts`, `workout_logs`, `body_measurements` etc.) — então apagar o usuário via
+`auth.admin.deleteUser` (só possível com a service_role key, nunca no cliente) já cascade-apaga
+tudo automaticamente. A Edge Function `delete-account` (primeira do projeto) só precisa: validar
+o JWT do chamador, limpar as fotos de progresso no Storage (não cascade) e chamar
+`deleteUser`. Cliente faz duas confirmações em sequência (ação irreversível, mais forte que o
+"resetar conta") e desloga localmente sem tentar revogar sessão no servidor (`scope: 'local'` —
+o usuário já não existe mais para revogar). `supabase/functions/delete-account/` roda em Deno,
+por isso saiu do `tsconfig.json` (`exclude`) — tipos e globals diferentes do app RN.
+
+---
+
 ## 3. Melhorias importadas do novux-finance e novux-mobile
 
 ### 3.1 Do **novux-mobile** (Flutter)
@@ -371,7 +410,7 @@ linter só aponta o item de configuração do painel.
 | ✅ **D** | **Execução prática**: `common_mistakes`, vídeo, cadência/respiração, alternativas, glossário | Concluída em 2026-07-31 — migration `005` + seed `004` já aplicados no Supabase |
 | ✅ **E** | **Timer de descanso**, última execução no exercício, sugestão de progressão de carga | Concluída em 2026-07-31 — sem mudança de schema (`rest_seconds` já existia) |
 | ✅ **R** | **Rebrand "Ember"** — nova identidade Novux (cores laranja→magenta, fontes, gradiente, ícone/splash) + tema light/dark comutável | Concluída em 2026-08-03 |
-| 🟡 **F** | **Perfil + Configurações** (peso corporal, tema, logout, refazer onboarding) + força de senha + esqueci senha | Concluída em 2026-08-03 (parcial — ver abaixo). Diferidos: unidade kg/lb, excluir conta (LGPD), termos/privacidade |
+| 🟡 **F** | **Perfil + Configurações** (peso corporal, tema, logout, refazer onboarding) + força de senha + esqueci senha | Concluída em 2026-08-03 (parcial — ver abaixo). Excluir conta (LGPD) concluído em 2026-08-06 (seção 2.8). Ainda diferidos: unidade kg/lb, termos/privacidade |
 | ✅ **G** | **Score de treino + insights + volume semanal por grupo** | Concluída em 2026-08-03 — sem schema novo nem lib de gráfico |
 | 🟡 **H** | Testes + typecheck + `Skeleton`/`EmptyState`/`ErrorBoundary` + Edge Function do cache de mídia | Sustentação — testes/typecheck/UI primitives concluídos em 2026-08-05; **Edge Function do cache de mídia ainda pendente** (exige conversa de design/segurança, ver seção 4) |
 | ✅ **K** | Estimativa de 1RM (Epley) no treino ativo | Concluída em 2026-08-05 — lógica pura testada, sem schema novo |

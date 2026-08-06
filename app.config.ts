@@ -43,6 +43,13 @@ const config: ExpoConfig = {
         color: BRAND_PRIMARY,
       },
     ],
+    [
+      'expo-image-picker',
+      {
+        photosPermission: 'O Novux Forge usa suas fotos para registrar seu progresso corporal.',
+        cameraPermission: 'O Novux Forge usa a câmera para registrar fotos de progresso.',
+      },
+    ],
   ],
   extra: {
     brandColor: BRAND_PRIMARY,

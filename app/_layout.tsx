@@ -20,11 +20,18 @@ import { SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import { useAuthStore } from '@/features/auth/authStore';
+import { useWorkoutReminders } from '@/features/notifications/useWorkoutReminders';
 import { queryClient } from '@/lib/queryClient';
 import { useTheme } from '@/theme';
 import { ConfirmDialogProvider, ErrorBoundary } from '@/components/ui';
 
 SplashScreen.preventAutoHideAsync();
+
+/** Só existe para manter o hook ativo durante toda a sessão autenticada */
+function WorkoutReminderScheduler() {
+  useWorkoutReminders();
+  return null;
+}
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { initialized, session, initialize } = useAuthStore();
@@ -50,7 +57,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [initialized, session, segments]);
 
-  return <>{children}</>;
+  return (
+    <>
+      {session && <WorkoutReminderScheduler />}
+      {children}
+    </>
+  );
 }
 
 export default function RootLayout() {

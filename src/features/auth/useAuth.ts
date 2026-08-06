@@ -1,5 +1,5 @@
 import { useAuthStore } from './authStore';
-import { requestPasswordReset, signIn, signOut, signUp } from './authService';
+import { requestPasswordReset, signIn, signOut, signOutLocal, signUp } from './authService';
 
 export function useAuth() {
   const { session, user, initialized } = useAuthStore();
@@ -12,6 +12,7 @@ export function useAuth() {
     signIn,
     signUp,
     signOut,
+    signOutLocal,
     requestPasswordReset,
   };
 }

@@ -7,7 +7,9 @@ import { supabase } from '@/lib/supabase';
  *
  * `workout_logs` cascade para `exercise_logs`→`set_logs`; `workouts` cascade
  * para `workout_exercises` e `weekly_plan` (ver migrations 001/004) — não
- * precisa apagar essas tabelas manualmente.
+ * precisa apagar essas tabelas manualmente. Fotos de progresso, por outro
+ * lado, vivem no Storage (não cascade com a linha do banco) — precisam ser
+ * apagadas explicitamente, senão ficam órfãs.
  */
 export async function resetAccountData(): Promise<void> {
   const { data: auth } = await supabase.auth.getUser();
@@ -19,6 +21,13 @@ export async function resetAccountData(): Promise<void> {
 
   const { error: workoutsErr } = await supabase.from('workouts').delete().eq('user_id', userId);
   if (workoutsErr) throw workoutsErr;
+
+  const { data: photos } = await supabase.storage.from('progress-photos').list(userId);
+  if (photos && photos.length > 0) {
+    await supabase.storage
+      .from('progress-photos')
+      .remove(photos.map((p) => `${userId}/${p.name}`));
+  }
 
   const { error: measurementsErr } = await supabase
     .from('body_measurements')

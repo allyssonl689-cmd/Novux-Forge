@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ONBOARDING_KEY } from '@/features/plan/useWeeklyPlan';
 import { fetchProfile, resetOnboarding, updateProfile, UserProfile } from './profileService';
 import { resetAccountData } from './resetAccountService';
+import { deleteAccountPermanently } from './deleteAccountService';
 
 export const PROFILE_KEY = ['profile'] as const;
 
@@ -38,5 +39,12 @@ export function useResetAccount() {
   return useMutation({
     mutationFn: resetAccountData,
     onSuccess: () => qc.invalidateQueries(),
+  });
+}
+
+/** Exclusão de conta (LGPD) — irreversível, via Edge Function. Ver deleteAccountService. */
+export function useDeleteAccount() {
+  return useMutation({
+    mutationFn: deleteAccountPermanently,
   });
 }

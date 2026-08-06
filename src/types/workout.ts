@@ -91,6 +91,8 @@ export interface BodyMeasurement {
   weight_kg: number;
   measured_at: string;
   created_at: string;
+  /** Path no bucket privado progress-photos, ou null se não tem foto */
+  photo_path: string | null;
 }
 
 export interface SetLog {

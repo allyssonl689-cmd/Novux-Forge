@@ -1,17 +1,8 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import { ensureNotificationPermission } from './notificationPermission';
 
 const CHANNEL_ID = 'rest-timer';
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
 
 let channelReady: Promise<void> | null = null;
 
@@ -28,17 +19,6 @@ function ensureChannel(): Promise<void> {
   return channelReady;
 }
 
-let permissionDenied = false;
-
-async function ensurePermission(): Promise<boolean> {
-  if (permissionDenied) return false;
-  const current = await Notifications.getPermissionsAsync();
-  if (current.status === 'granted') return true;
-  const requested = await Notifications.requestPermissionsAsync();
-  if (requested.status !== 'granted') permissionDenied = true;
-  return requested.status === 'granted';
-}
-
 /**
  * Agenda o aviso de fim de descanso como notificação nativa — dispara mesmo
  * com a tela travada ou o app em segundo plano, diferente do haptic in-app.
@@ -46,7 +26,7 @@ async function ensurePermission(): Promise<boolean> {
  */
 export async function scheduleRestEndNotification(seconds: number): Promise<string | null> {
   if (seconds <= 0) return null;
-  const allowed = await ensurePermission();
+  const allowed = await ensureNotificationPermission();
   if (!allowed) return null;
   await ensureChannel();
   return Notifications.scheduleNotificationAsync({

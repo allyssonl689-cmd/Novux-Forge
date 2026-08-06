@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import {
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -11,7 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useConfirm } from '@/components/ui';
 import { useAuth } from '@/features/auth/useAuth';
-import { useResetAccount, useResetOnboarding } from '@/features/profile/useProfile';
+import { useReminderStore } from '@/features/notifications/reminderStore';
+import { useDeleteAccount, useResetAccount, useResetOnboarding } from '@/features/profile/useProfile';
 import { clearActiveWorkoutLocal } from '@/features/workouts/activeWorkoutStore';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useTheme } from '@/theme';
@@ -24,15 +26,32 @@ const THEME_OPTIONS: { value: ThemePreference; label: string; icon: React.Compon
   { value: 'system', label: 'Sistema', icon: 'smartphone' },
 ];
 
+const REMINDER_TIME_OPTIONS: { hour: number; minute: number }[] = [
+  { hour: 6, minute: 0 },
+  { hour: 7, minute: 0 },
+  { hour: 8, minute: 0 },
+  { hour: 9, minute: 0 },
+];
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
 export default function SettingsScreen() {
   const router = useRouter();
   const haptics = useHaptics();
   const confirm = useConfirm();
-  const { signOut } = useAuth();
+  const { signOut, signOutLocal } = useAuth();
   const { colors, preference, setPreference } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const resetOnboarding = useResetOnboarding();
   const resetAccount = useResetAccount();
+  const deleteAccount = useDeleteAccount();
+  const reminderEnabled = useReminderStore((s) => s.enabled);
+  const reminderHour = useReminderStore((s) => s.hour);
+  const reminderMinute = useReminderStore((s) => s.minute);
+  const setReminderEnabled = useReminderStore((s) => s.setEnabled);
+  const setReminderTime = useReminderStore((s) => s.setTime);
 
   async function handleLogout() {
     const action = await confirm({
@@ -85,6 +104,38 @@ export default function SettingsScreen() {
     });
   }
 
+  async function handleDeleteAccount() {
+    const step1 = await confirm({
+      title: 'Excluir minha conta',
+      message:
+        'Isso apaga PERMANENTEMENTE sua conta, login, histórico, fichas e fotos. É diferente do "resetar conta": aqui não dá para continuar usando o mesmo login depois — seria preciso se cadastrar de novo.',
+      actions: [
+        { key: 'cancel', label: 'Cancelar', variant: 'secondary' },
+        { key: 'continue', label: 'Continuar' },
+      ],
+    });
+    if (step1 !== 'continue') return;
+
+    const step2 = await confirm({
+      title: 'Tem certeza mesmo?',
+      message: 'Essa é a confirmação final. Sua conta será excluída agora e não pode ser recuperada depois.',
+      actions: [
+        { key: 'cancel', label: 'Cancelar', variant: 'secondary' },
+        { key: 'delete', label: 'Excluir para sempre', variant: 'danger' },
+      ],
+    });
+    if (step2 !== 'delete') return;
+
+    deleteAccount.mutate(undefined, {
+      onSuccess: async () => {
+        clearActiveWorkoutLocal();
+        await signOutLocal();
+      },
+      onError: () =>
+        confirm({ title: 'Erro', message: 'Não foi possível excluir a conta. Tente novamente.', actions: [{ key: 'ok', label: 'OK' }] }),
+    });
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
@@ -129,6 +180,42 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Notificações */}
+        <Text style={styles.sectionLabel}>Notificações</Text>
+        <View style={styles.card}>
+          <View style={styles.actionRow}>
+            <Feather name="bell" size={18} color={colors.text.secondary} />
+            <View style={styles.actionText}>
+              <Text style={styles.actionLabel}>Lembrete diário de treino</Text>
+              <Text style={styles.actionHint}>Avisa nos dias com ficha marcada na agenda</Text>
+            </View>
+            <Switch
+              value={reminderEnabled}
+              onValueChange={(v) => { setReminderEnabled(v); haptics.light(); }}
+              trackColor={{ true: colors.accent.default, false: colors.border.strong }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+          {reminderEnabled && (
+            <View style={[styles.reminderTimes, styles.rowDivider]}>
+              {REMINDER_TIME_OPTIONS.map((opt) => {
+                const active = opt.hour === reminderHour && opt.minute === reminderMinute;
+                return (
+                  <TouchableOpacity
+                    key={`${opt.hour}:${opt.minute}`}
+                    style={[styles.timeChip, active && styles.timeChipActive]}
+                    onPress={() => { setReminderTime(opt.hour, opt.minute); haptics.light(); }}
+                  >
+                    <Text style={[styles.timeChipLabel, active && styles.timeChipLabelActive]}>
+                      {pad2(opt.hour)}:{pad2(opt.minute)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+        </View>
+
         {/* Conta */}
         <Text style={styles.sectionLabel}>Conta</Text>
         <View style={styles.card}>
@@ -142,6 +229,13 @@ export default function SettingsScreen() {
           <TouchableOpacity style={[styles.actionRow, styles.rowDivider]} onPress={handleLogout} activeOpacity={0.75}>
             <Feather name="log-out" size={18} color={colors.feedback.danger} />
             <Text style={[styles.actionLabel, { color: colors.feedback.danger }]}>Sair da conta</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionRow, styles.rowDivider]} onPress={handleDeleteAccount} activeOpacity={0.75}>
+            <Feather name="x-octagon" size={18} color={colors.feedback.danger} />
+            <View style={styles.actionText}>
+              <Text style={[styles.actionLabel, { color: colors.feedback.danger }]}>Excluir minha conta</Text>
+              <Text style={styles.actionHint}>Apaga tudo, inclusive o login — não pode ser desfeito</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -204,6 +298,25 @@ const makeStyles = (colors: ThemeColors) =>
     actionText: { flex: 1, gap: 2 },
     actionLabel: { ...typography.body, color: colors.text.primary },
     actionHint: { ...typography.bodySmall, color: colors.text.tertiary },
+
+    reminderTimes: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.lg,
+    },
+    timeChip: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: spacing.sm,
+      borderRadius: radius.md,
+      backgroundColor: colors.bg.elevated,
+      borderWidth: 1,
+      borderColor: colors.border.default,
+    },
+    timeChipActive: { backgroundColor: colors.accent.dim, borderColor: colors.accent.border },
+    timeChipLabel: { ...typography.label, color: colors.text.secondary },
+    timeChipLabelActive: { color: colors.accent.default },
 
     version: {
       ...typography.bodySmall,

@@ -64,6 +64,7 @@ export default function AppLayout() {
         options={{ href: null, tabBarStyle: { display: 'none' } }}
       />
       <Tabs.Screen name="progress" options={{ href: null }} />
+      <Tabs.Screen name="progress-photos" options={{ href: null }} />
     </Tabs>
   );
 }
