@@ -264,6 +264,13 @@ só começa ao concluir uma série do segundo exercício (a "âncora" do par).
 tela de detalhe do exercício) — uma investigação inicial mal-conduzida sugeriu o contrário; não
 houve trabalho novo aqui.
 
+**Catálogo de exercícios — 69 → 71** (`seed/005_catalog_enrichment.sql`): usuário procurou
+"Crucifixo na Máquina" e não achou — já existia como "Voador (Peck Deck)", só renomeado para
+incluir os dois termos. "Gravitron" (estação de puxada/mergulho assistidos) não existia — 2
+exercícios novos, `free_db_id` deliberadamente `null` nos dois: o Free Exercise DB não tem um GIF
+do aparelho assistido de verdade (o candidato mais próximo, `Dip_Machine`, é uma máquina de
+tríceps sentado — outro aparelho), então prevalece a busca no YouTube em vez de um GIF errado.
+
 ---
 
 ## 3. Melhorias importadas do novux-finance e novux-mobile
