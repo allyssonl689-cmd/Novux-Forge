@@ -19,12 +19,16 @@ Os seeds são idempotentes: rodar de novo não duplica dados.
 | 12 | `seed/005_catalog_enrichment.sql` | Renomeia "Voador" para incluir "Crucifixo na Máquina"; adiciona Puxada e Mergulho Assistidos (Gravitron) — 69 → 71 exercícios |
 | 13 | `seed/006_catalog_expansion.sql` | Expansão moderada: 36 exercícios novos, priorizando trapézio/lombar/antebraço/panturrilha/glúteos (mais rasos) — 71 → 107 exercícios |
 | 14 | `migrations/008_progress_photos.sql` | Coluna `body_measurements.photo_path` + bucket privado `progress-photos` com RLS por pasta de usuário |
+| 15 | `migrations/009_exercise_media_cache.sql` | Colunas `exercises.media_url`/`media_frames` — cache da URL final já resolvida, escrito só pela Edge Function `cache-exercise-media` |
 
 ## Edge Functions
 
 | Função | O que faz |
 |---|---|
-| `delete-account` | Exclusão de conta (LGPD) — valida o JWT do chamador, limpa fotos de progresso no Storage e chama `auth.admin.deleteUser` (cascade apaga todo o resto). Deploy via MCP `mcp__supabase__deploy_edge_function` — código em `supabase/functions/delete-account/index.ts` (roda em Deno, fora do `tsconfig.json` do app). |
+| `delete-account` | Exclusão de conta (LGPD) — valida o JWT do chamador, limpa fotos de progresso no Storage e chama `auth.admin.deleteUser` (cascade apaga todo o resto). |
+| `cache-exercise-media` | Resolve e cacheia a mídia de um exercício (RapidAPI ou Free Exercise DB) no bucket `exercise-media`, com `service_role` — o cliente nunca mais escreve direto no Storage. Grava a URL final em `exercises.media_url` para não precisar resolver de novo nas próximas vezes. |
+
+Deploy via MCP `mcp__supabase__deploy_edge_function` — código em `supabase/functions/<nome>/index.ts` (roda em Deno, por isso está fora do `tsconfig.json` do app).
 
 > **A ordem importa entre 4 e 5.** O seed de planos referencia exercícios por `slug`;
 > se o catálogo ampliado não estiver carregado, os exercícios faltantes são ignorados
@@ -34,16 +38,20 @@ Os seeds são idempotentes: rodar de novo não duplica dados.
 ## Mídia dos exercícios
 
 Os `free_db_id` foram validados contra o
-[Free Exercise DB](https://github.com/yuhonas/free-exercise-db) — a Camada 3 do
-`mediaResolver` monta a URL `.../exercises/{free_db_id}/0.jpg`.
+[Free Exercise DB](https://github.com/yuhonas/free-exercise-db) — o fallback final da
+Edge Function `cache-exercise-media` monta a URL `.../exercises/{free_db_id}/0.jpg`.
 
 Os `rapid_api_id` do seed inicial **não foram verificados** e ficam `null` nos exercícios
-novos. Enquanto `EXPO_PUBLIC_RAPIDAPI_KEY` não estiver configurada a Camada 2 nem é
-acionada; ao configurá-la, confira os IDs antes — um ID errado baixa o GIF de outro
-exercício e o cacheia no Storage.
+novos. A Camada 2 (RapidAPI/ExerciseDB) só é acionada se o secret `RAPIDAPI_KEY` estiver
+configurado nas Edge Functions do projeto (Dashboard > Edge Functions > Manage secrets) —
+**não é mais uma env var do app** (`EXPO_PUBLIC_RAPIDAPI_KEY` foi removida do cliente por
+segurança). Antes de configurar, confira os IDs: um `rapid_api_id` errado baixa o GIF de
+outro exercício e cacheia permanentemente.
 
-## Pendência de segurança conhecida
+## Segurança do bucket `exercise-media` — resolvido
 
-A policy `exercise-media: insert para cache` permite que **qualquer usuário autenticado**
-escreva no bucket público, e o `mediaResolver` faz upload direto do cliente. Isso deve
-migrar para uma Edge Function com `service_role` (ver `ROADMAP.md`, seção 4).
+A policy antiga de insert permitia que **qualquer usuário autenticado** escrevesse no
+bucket público — corrigido removendo a policy (migration `003`) e movendo toda escrita
+para a Edge Function `cache-exercise-media`, que usa `service_role` e nunca expõe essa
+chave ao cliente. Leitura continua pública (bucket público de propósito — mídia
+compartilhada entre todos os usuários, sem dado pessoal).

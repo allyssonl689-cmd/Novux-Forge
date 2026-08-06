@@ -55,7 +55,8 @@ const config: ExpoConfig = {
     brandColor: BRAND_PRIMARY,
     supabaseUrl:     process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
-    rapidApiKey:     process.env.EXPO_PUBLIC_RAPIDAPI_KEY ?? null,
+    // A chave do RapidAPI saiu de cá (Fase H): agora é o secret RAPIDAPI_KEY
+    // da Edge Function cache-exercise-media, nunca mais bundlada no cliente.
     // Gerado por `eas init` em 2026-08-05 — vincula ao projeto
     // @novux-forges-team/novux-forge no EAS. `app.config.ts` é dinâmico
     // (TS), então o CLI não escreve aqui sozinho; foi copiado do output.
