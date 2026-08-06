@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { SafeScreen } from '@/components/layout';
 import { ScreenHeader } from '@/components/layout';
 import { PasswordStrength } from '@/components/auth/PasswordStrength';
-import { Button, Input, useConfirm } from '@/components/ui';
+import { BrandLogo, Button, Input, useConfirm } from '@/components/ui';
 import { useAuth } from '@/features/auth/useAuth';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
@@ -163,6 +163,8 @@ export default function SignUpScreen() {
               <Text style={styles.footerLink}>Entrar</Text>
             </TouchableOpacity>
           </View>
+
+          <BrandLogo size={28} style={styles.footerLogo} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeScreen>
@@ -178,4 +180,5 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   footer:     { flexDirection: 'row', justifyContent: 'center', gap: spacing.xs, marginTop: spacing['3xl'] },
   footerText: { ...typography.body, color: colors.text.secondary },
   footerLink: { ...typography.body, color: colors.accent.default, fontFamily: fonts.semiBold },
+  footerLogo: { alignSelf: 'center', marginTop: spacing['2xl'], opacity: 0.8 },
 });

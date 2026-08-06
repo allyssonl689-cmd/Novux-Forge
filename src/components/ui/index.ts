@@ -1,4 +1,5 @@
 export { Button } from './Button';
+export { BrandLogo } from './BrandLogo';
 export { GradientButton } from './GradientButton';
 export { Input } from './Input';
 export { Badge } from './Badge';

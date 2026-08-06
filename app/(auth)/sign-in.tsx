@@ -1,8 +1,10 @@
+import { Feather } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
+  Animated,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -11,10 +13,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { z } from 'zod';
 import { SafeScreen } from '@/components/layout';
-import { Button, Input, useConfirm } from '@/components/ui';
+import { BrandLogo, Button, Input, useConfirm } from '@/components/ui';
 import { useAuth } from '@/features/auth/useAuth';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
@@ -31,9 +32,26 @@ export default function SignInScreen() {
   const router = useRouter();
   const { signIn, requestPasswordReset } = useAuth();
   const confirm = useConfirm();
-  const { colors } = useTheme();
+  const { colors, mode, toggle } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [loading, setLoading] = useState(false);
+
+  // Entrada da logo: um "pump" com leve giro, como um rep concluído — depois consolida.
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+  const logoScale = useRef(new Animated.Value(0.4)).current;
+  const logoRotate = useRef(new Animated.Value(-1)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(logoOpacity, { toValue: 1, duration: 220, useNativeDriver: true }),
+      Animated.parallel([
+        Animated.spring(logoScale, { toValue: 1, friction: 3, tension: 90, useNativeDriver: true }),
+        Animated.spring(logoRotate, { toValue: 0, friction: 4, tension: 80, useNativeDriver: true }),
+      ]),
+    ]).start();
+  }, [logoOpacity, logoScale, logoRotate]);
+
+  const logoRotateDeg = logoRotate.interpolate({ inputRange: [-1, 0], outputRange: ['-10deg', '0deg'] });
 
   const { control, handleSubmit, getValues, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -76,6 +94,10 @@ export default function SignInScreen() {
 
   return (
     <SafeScreen style={styles.screen}>
+      <TouchableOpacity style={styles.themeBtn} onPress={toggle} hitSlop={8}>
+        <Feather name={mode === 'dark' ? 'moon' : 'sun'} size={18} color={colors.text.secondary} />
+      </TouchableOpacity>
+
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -87,11 +109,14 @@ export default function SignInScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Image
-              source={require('../../assets/images/icon.png')}
-              style={styles.logo}
-              contentFit="contain"
-            />
+            <Animated.View
+              style={{
+                opacity: logoOpacity,
+                transform: [{ scale: logoScale }, { rotate: logoRotateDeg }],
+              }}
+            >
+              <BrandLogo size={72} style={styles.logo} />
+            </Animated.View>
             <Text style={styles.brand}>Novux Forge</Text>
             <Text style={styles.tagline}>Seu tracking de treinos</Text>
           </View>
@@ -163,13 +188,28 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   screen:      { flex: 1 },
   flex:        { flex: 1 },
   container:   { flexGrow: 1, justifyContent: 'center', paddingHorizontal: spacing['2xl'], paddingVertical: spacing['4xl'] },
+  themeBtn: {
+    position: 'absolute',
+    top: spacing['3xl'],
+    right: spacing.lg,
+    zIndex: 1,
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    backgroundColor: colors.bg.elevated,
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   header:      { alignItems: 'center', marginBottom: spacing['4xl'] },
-  logo:        { width: 72, height: 72, borderRadius: radius.xl, marginBottom: spacing.lg },
+  logo:        { borderRadius: radius.xl, marginBottom: spacing.lg },
   brand:       {
     ...typography.display,
-    fontSize: 34,
-    lineHeight: 44,
+    fontSize: 32,
+    lineHeight: 50,
     letterSpacing: -0.5,
+    paddingBottom: spacing.xs,
     color: colors.text.primary,
     textAlign: 'center',
   },
