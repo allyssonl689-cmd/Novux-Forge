@@ -1,10 +1,11 @@
 import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
 import { Dimensions, Linking, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ExerciseMedia } from './ExerciseMedia';
 import { Skeleton, SkeletonGroup } from '@/components/ui';
-import { useExercise } from '@/features/exercises/useExercises';
+import { useExercise, useExerciseAlternatives } from '@/features/exercises/useExercises';
 import { videoUrlFor } from '@/features/exercises/exerciseService';
 import { useTheme } from '@/theme';
 import { ThemeColors } from '@/theme/palette';
@@ -14,6 +15,16 @@ interface Props {
   /** id do exercício a mostrar; null = modal fechado */
   exerciseId: string | null;
   onClose: () => void;
+}
+
+function Badge({ label }: { label: string }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  return (
+    <View style={styles.badge}>
+      <Text style={styles.badgeLabel}>{label}</Text>
+    </View>
+  );
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -35,15 +46,20 @@ function Section({ title, icon, children }: { title: string; icon: keyof typeof 
 }
 
 /**
- * Versão condensada do "como fazer" (a tela completa vive em
- * app/(app)/exercises/[id].tsx): mídia + vídeo + antes de começar +
- * passo a passo. Pensada para abrir sem sair de onde o usuário está —
- * revisando a ficha ou no meio do treino, na academia.
+ * Mesmo conteúdo de app/(app)/exercises/[id].tsx, em modal — para não sair
+ * de onde o usuário está (editor de ficha ou treino ativo, na academia).
  */
 export function ExerciseHowToModal({ exerciseId, onClose }: Props) {
+  const router = useRouter();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { data: exercise, isLoading, isError } = useExercise(exerciseId ?? '');
+  const { data: alternatives = [] } = useExerciseAlternatives(exercise);
+
+  function goToAlternative(id: string) {
+    onClose();
+    router.push(`/(app)/exercises/${id}`);
+  }
 
   return (
     <Modal
@@ -129,6 +145,95 @@ export function ExerciseHowToModal({ exerciseId, onClose }: Props) {
                   </View>
                 </Section>
               )}
+
+              {(exercise.breathing || exercise.tempo) && (
+                <View style={styles.metaRow}>
+                  {exercise.breathing && (
+                    <View style={styles.metaCard}>
+                      <View style={styles.sectionHeader}>
+                        <Feather name="wind" size={14} color={colors.accent.default} />
+                        <Text style={styles.metaTitle}>Respiração</Text>
+                      </View>
+                      <Text style={styles.metaText}>{exercise.breathing}</Text>
+                    </View>
+                  )}
+                  {exercise.tempo && (
+                    <View style={styles.metaCard}>
+                      <View style={styles.sectionHeader}>
+                        <Feather name="clock" size={14} color={colors.accent.default} />
+                        <Text style={styles.metaTitle}>Cadência</Text>
+                      </View>
+                      <Text style={styles.metaText}>{exercise.tempo}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {exercise.common_mistakes?.length > 0 && (
+                <Section title="Erros comuns" icon="alert-triangle">
+                  <View style={styles.list}>
+                    {exercise.common_mistakes.map((m, i) => (
+                      <View key={i} style={styles.listItem}>
+                        <Feather name="x" size={14} color={colors.feedback.danger} />
+                        <Text style={styles.listText}>{m}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </Section>
+              )}
+
+              {exercise.tips.length > 0 && (
+                <Section title="Dicas" icon="check-circle">
+                  <View style={styles.list}>
+                    {exercise.tips.map((tip, i) => (
+                      <View key={i} style={styles.listItem}>
+                        <Feather name="check" size={14} color={colors.accent.default} />
+                        <Text style={styles.listText}>{tip}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </Section>
+              )}
+
+              {exercise.safety_notes && (
+                <View style={styles.safetyCard}>
+                  <View style={styles.sectionHeader}>
+                    <Feather name="shield" size={15} color={colors.amber.default} />
+                    <Text style={styles.safetyTitle}>Segurança</Text>
+                  </View>
+                  <Text style={styles.safetyText}>{exercise.safety_notes}</Text>
+                </View>
+              )}
+
+              {alternatives.length > 0 && (
+                <Section title="Se o aparelho estiver ocupado" icon="repeat">
+                  <View style={styles.list}>
+                    {alternatives.map((alt) => (
+                      <TouchableOpacity
+                        key={alt.id}
+                        style={styles.altRow}
+                        onPress={() => goToAlternative(alt.id)}
+                        activeOpacity={0.75}
+                      >
+                        <View style={styles.listItem}>
+                          <Text style={styles.listText} numberOfLines={1}>{alt.name}</Text>
+                        </View>
+                        <Feather name="chevron-right" size={16} color={colors.text.tertiary} />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </Section>
+              )}
+
+              {exercise.muscles_worked.length > 0 && (
+                <Section title="Músculos secundários" icon="activity">
+                  <View style={styles.badgesRow}>
+                    {exercise.muscles_worked.map((m) => (
+                      <Badge key={m} label={m} />
+                    ))}
+                  </View>
+                </Section>
+              )}
             </>
           )}
         </ScrollView>
@@ -190,4 +295,46 @@ const makeStyles = (colors: ThemeColors) =>
       marginTop: 1,
     },
     stepNumberText: { ...typography.labelSmall, color: colors.accent.default },
+
+    metaRow: { flexDirection: 'row', gap: spacing.sm },
+    metaCard: {
+      flex: 1,
+      padding: spacing.md,
+      borderRadius: radius.lg,
+      backgroundColor: colors.bg.surface,
+      borderWidth: 1,
+      borderColor: colors.border.default,
+      gap: spacing.sm,
+    },
+    metaTitle: { ...typography.label, color: colors.text.secondary },
+    metaText: { ...typography.bodySmall, color: colors.text.primary },
+
+    safetyCard: {
+      padding: spacing.lg,
+      borderRadius: radius.lg,
+      backgroundColor: colors.amber.dim,
+      borderWidth: 1,
+      borderColor: colors.amber.border,
+      gap: spacing.sm,
+    },
+    safetyTitle: { ...typography.label, color: colors.amber.default },
+    safetyText: { ...typography.body, color: colors.text.secondary },
+
+    altRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.sm,
+    },
+
+    badgesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+    badge: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      borderRadius: radius.full,
+      backgroundColor: colors.bg.elevated,
+      borderWidth: 1,
+      borderColor: colors.border.default,
+    },
+    badgeLabel: { ...typography.label, color: colors.text.secondary },
   });

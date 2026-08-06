@@ -52,6 +52,7 @@ export default function WorkoutEditorScreen() {
   const [renameOpen, setRenameOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [howToId, setHowToId] = useState<string | null>(null);
+  const [replacing, setReplacing] = useState<WorkoutExerciseDetailed | null>(null);
 
   const workout = data?.workout;
   const exercises = data?.exercises ?? [];
@@ -62,6 +63,19 @@ export default function WorkoutEditorScreen() {
       {
         onSuccess: () => haptics.success(),
         onError: () => Alert.alert('Erro', 'Não foi possível adicionar os exercícios.'),
+      },
+    );
+  }
+
+  function handleReplace(selected: Exercise[]) {
+    const target = replacing;
+    const newExercise = selected[0];
+    if (!target || !newExercise) return;
+    updateExercise.mutate(
+      { id: target.id, patch: { exercise_id: newExercise.id } },
+      {
+        onSuccess: () => haptics.success(),
+        onError: () => Alert.alert('Erro', 'Não foi possível substituir o exercício.'),
       },
     );
   }
@@ -209,6 +223,7 @@ export default function WorkoutEditorScreen() {
                   onMove={(dir) => handleMove(i, dir)}
                   onRemove={() => handleRemove(ex)}
                   onPressInfo={() => setHowToId(ex.exercise_id)}
+                  onReplace={() => setReplacing(ex)}
                   onPatch={(patch) => updateExercise.mutate({ id: ex.id, patch })}
                 />
                 {next && (
@@ -259,6 +274,17 @@ export default function WorkoutEditorScreen() {
         onConfirm={handleAdd}
       />
 
+      <ExercisePickerModal
+        visible={!!replacing}
+        onClose={() => setReplacing(null)}
+        mode="single"
+        title={`Substituir "${replacing?.exercise_name ?? ''}"`}
+        alreadyAddedIds={exercises
+          .filter((e) => e.id !== replacing?.id)
+          .map((e) => e.exercise_id)}
+        onConfirm={handleReplace}
+      />
+
       <ExerciseHowToModal exerciseId={howToId} onClose={() => setHowToId(null)} />
 
       {/* Modal de renomear */}
@@ -302,6 +328,7 @@ interface RowProps {
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
   onPressInfo: () => void;
+  onReplace: () => void;
   onPatch: (patch: {
     default_sets?: number;
     default_reps?: number;
@@ -310,7 +337,7 @@ interface RowProps {
   }) => void;
 }
 
-function ExerciseRow({ index, total, exercise, isSuperset, onMove, onRemove, onPressInfo, onPatch }: RowProps) {
+function ExerciseRow({ index, total, exercise, isSuperset, onMove, onRemove, onPressInfo, onReplace, onPatch }: RowProps) {
   const { colors } = useTheme();
   const rowStyles = useMemo(() => makeRowStyles(colors), [colors]);
   const [sets, setSets] = useState(String(exercise.default_sets));
@@ -374,6 +401,9 @@ function ExerciseRow({ index, total, exercise, isSuperset, onMove, onRemove, onP
         <View style={rowStyles.actions}>
           <TouchableOpacity onPress={onPressInfo} hitSlop={6}>
             <Feather name="info" size={17} color={colors.accent.default} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onReplace} hitSlop={6}>
+            <Feather name="repeat" size={16} color={colors.text.secondary} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => onMove(-1)} disabled={index === 0} hitSlop={6}>
             <Feather

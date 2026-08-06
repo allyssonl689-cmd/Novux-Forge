@@ -199,6 +199,7 @@ export async function updateWorkoutExercise(
       | 'notes'
       | 'sort_order'
       | 'superset_group'
+      | 'exercise_id'
     >
   >,
 ): Promise<void> {

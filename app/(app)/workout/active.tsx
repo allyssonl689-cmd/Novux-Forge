@@ -180,11 +180,11 @@ function ActiveWorkoutScreen() {
     await completeSet(exerciseIdx, setIdx);
 
     const ex = exercises[exerciseIdx];
-    const wasLastSet = ex ? setIdx === ex.sets.length - 1 : true;
 
     // Superset: os dois exercícios do par não têm descanso entre si — vai
     // direto para o parceiro. O descanso da dupla só começa ao concluir uma
-    // série do segundo exercício (o "âncora" do par).
+    // série do segundo exercício (o "âncora" do par) — inclusive a última,
+    // para dar tempo de recuperar antes do próximo exercício.
     const partnerIdx =
       ex?.supersetGroup != null
         ? exercises.findIndex((e, i) => i !== exerciseIdx && e.supersetGroup === ex.supersetGroup)
@@ -192,15 +192,16 @@ function ActiveWorkoutScreen() {
 
     if (partnerIdx !== -1) {
       const isAnchor = exerciseIdx > partnerIdx;
-      if (isAnchor && ex && ex.restSeconds > 0 && !wasLastSet) {
+      if (isAnchor && ex && ex.restSeconds > 0) {
         rest.start(ex.restSeconds);
       }
       setCurrentExercise(partnerIdx);
       return;
     }
 
-    // Exercício solo: inicia o descanso automaticamente, a não ser que fosse a última série
-    if (ex && ex.restSeconds > 0 && !wasLastSet) {
+    // Descanso automático a cada série concluída, inclusive a última — dá
+    // tempo de recuperar antes de seguir para o próximo exercício.
+    if (ex && ex.restSeconds > 0) {
       rest.start(ex.restSeconds);
     }
   }
@@ -361,10 +362,10 @@ function ActiveWorkoutScreen() {
           )}
 
           <View style={styles.tableHeader}>
-            <Text style={[styles.tableCol, { width: 28 }]}>Série</Text>
-            <Text style={[styles.tableCol, { flex: 1 }]}>Peso</Text>
-            <Text style={[styles.tableCol, { flex: 1 }]}>Reps</Text>
-            <Text style={[styles.tableCol, { width: 40 }]}>RPE</Text>
+            <Text style={[styles.tableCol, { width: 40 }]} numberOfLines={1}>Série</Text>
+            <Text style={[styles.tableCol, { flex: 1 }]} numberOfLines={1}>Peso</Text>
+            <Text style={[styles.tableCol, { flex: 1 }]} numberOfLines={1}>Reps</Text>
+            <Text style={[styles.tableCol, { width: 40 }]} numberOfLines={1}>RPE</Text>
             <Text style={[styles.tableCol, { width: 80 }]}></Text>
           </View>
 

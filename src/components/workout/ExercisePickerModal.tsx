@@ -24,11 +24,21 @@ interface Props {
   /** Ids já presentes na ficha — aparecem marcados e desabilitados */
   alreadyAddedIds?: string[];
   onConfirm: (exercises: Exercise[]) => void;
+  /** 'single': tocar no exercício já confirma, sem checkbox/rodapé — usado para substituir */
+  mode?: 'multi' | 'single';
+  title?: string;
 }
 
 const ALL = 'Todos';
 
-export function ExercisePickerModal({ visible, onClose, alreadyAddedIds = [], onConfirm }: Props) {
+export function ExercisePickerModal({
+  visible,
+  onClose,
+  alreadyAddedIds = [],
+  onConfirm,
+  mode = 'multi',
+  title,
+}: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { data: exercises = [], isLoading } = useExercises();
@@ -77,6 +87,15 @@ export function ExercisePickerModal({ visible, onClose, alreadyAddedIds = [], on
     handleClose();
   }
 
+  function handlePress(exercise: Exercise) {
+    if (mode === 'single') {
+      onConfirm([exercise]);
+      handleClose();
+      return;
+    }
+    toggle(exercise);
+  }
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
       <SafeAreaView style={styles.safe}>
@@ -84,7 +103,7 @@ export function ExercisePickerModal({ visible, onClose, alreadyAddedIds = [], on
           <TouchableOpacity onPress={handleClose} style={styles.headerBtn} hitSlop={8}>
             <Feather name="x" size={22} color={colors.text.secondary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Adicionar exercícios</Text>
+          <Text style={styles.headerTitle}>{title ?? 'Adicionar exercícios'}</Text>
           <View style={styles.headerBtn} />
         </View>
 
@@ -157,7 +176,7 @@ export function ExercisePickerModal({ visible, onClose, alreadyAddedIds = [], on
               return (
                 <TouchableOpacity
                   style={[styles.row, isSelected && styles.rowSelected, added && styles.rowAdded]}
-                  onPress={() => !added && toggle(item)}
+                  onPress={() => !added && handlePress(item)}
                   activeOpacity={added ? 1 : 0.75}
                 >
                   <View style={styles.rowText}>
@@ -168,6 +187,8 @@ export function ExercisePickerModal({ visible, onClose, alreadyAddedIds = [], on
                   </View>
                   {added ? (
                     <Text style={styles.addedLabel}>na ficha</Text>
+                  ) : mode === 'single' ? (
+                    <Feather name="chevron-right" size={18} color={colors.text.tertiary} />
                   ) : (
                     <View style={[styles.checkbox, isSelected && styles.checkboxOn]}>
                       {isSelected && <Feather name="check" size={14} color={colors.text.inverse} />}
@@ -179,7 +200,7 @@ export function ExercisePickerModal({ visible, onClose, alreadyAddedIds = [], on
           />
         )}
 
-        {selectedList.length > 0 && (
+        {mode === 'multi' && selectedList.length > 0 && (
           <View style={styles.footer}>
             <Button
               label={`Adicionar ${selectedList.length} exercício${selectedList.length > 1 ? 's' : ''}`}

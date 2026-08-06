@@ -90,6 +90,7 @@ export function useUpdateWorkoutExercise(workoutId: string) {
           | 'notes'
           | 'sort_order'
           | 'superset_group'
+          | 'exercise_id'
         >
       >;
     }) => updateWorkoutExercise(id, patch),

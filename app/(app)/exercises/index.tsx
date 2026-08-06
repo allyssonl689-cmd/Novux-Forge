@@ -228,7 +228,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.accent.dim,
     borderColor: colors.accent.border,
   },
-  filterLabel: { ...typography.label, lineHeight: 18, color: colors.text.secondary },
+  filterLabel: { ...typography.label, color: colors.text.secondary },
   filterLabelActive: { color: colors.accent.default },
 
   // Lista

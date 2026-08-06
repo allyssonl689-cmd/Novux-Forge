@@ -79,15 +79,15 @@ export const typography = {
   label: {
     fontFamily: fonts.medium,
     fontSize: 11,
-    lineHeight: 16,
-    letterSpacing: 1.5,
+    lineHeight: 18,
+    letterSpacing: 1,
     textTransform: 'uppercase' as const,
   },
   labelSmall: {
     fontFamily: fonts.medium,
     fontSize: 9,
-    lineHeight: 14,
-    letterSpacing: 2,
+    lineHeight: 16,
+    letterSpacing: 1.2,
     textTransform: 'uppercase' as const,
   },
   caption: {

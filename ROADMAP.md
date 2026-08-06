@@ -191,7 +191,9 @@ Tela de detalhe reorganizada: mídia → vídeo → antes de começar → execu�
 
 `useRestTimer` + `RestTimerBar`: countdown automático ao concluir uma série (usa o
 `rest_seconds` da ficha, que enfim é consumido), haptic pesado ao zerar, ajuste −15/+15s, botão
-pular e barra de progresso. Não dispara na última série do exercício. Para ao finalizar/descartar.
+pular e barra de progresso. Dispara em toda série concluída, inclusive a última (2026-08-06:
+antes não disparava na última, mas o usuário pediu tempo pra recuperar antes do próximo
+exercício). Para ao finalizar/descartar.
 
 ---
 
